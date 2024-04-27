@@ -58,8 +58,12 @@ func main() {
 	println(bufferCompact.Len())
 
 	unpacker := newProfileUnPacker(merger.mergedProfile)
-	p, _ := unpacker.unpack(1)
-	println(p)
+	p, _ := unpacker.unpack(0)
+	fileToWrite, err := os.OpenFile(dir+"resultprof", os.O_CREATE|os.O_RDWR, os.ModePerm)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_ = p.Write(fileToWrite)
 }
 
 func getLinesKey(lines []*Line) string {
@@ -68,6 +72,11 @@ func getLinesKey(lines []*Line) string {
 		result = append(result, fmt.Sprintf("%d%d", l.FunctionId, l.Line))
 	}
 	return strings.Join(result, "|")
+}
+
+type locationKey struct {
+	mappingID, address uint64
+	lines              string
 }
 
 type functionKey struct {
@@ -164,14 +173,13 @@ func (pu *profileUnPacker) unpackSampleType(offset uint64) *profile.ValueType {
 }
 
 func (pu *profileUnPacker) unpackSample(p *profile.Profile, offset uint64) *profile.Sample {
-	var s profile.Sample
-	sample := pu.mergedProfile.Samples[offset]
-	s.Location = make([]*profile.Location, 0, len(sample.LocationId))
-	for _, loc := range sample.LocationId {
-		s.Location = append(s.Location, pu.unpackLocation(p, uint64(loc)))
+	sample := new(profile.Sample)
+	mergedSample := pu.mergedProfile.Samples[offset]
+	for _, loc := range mergedSample.LocationId {
+		sample.Location = append(sample.Location, pu.unpackLocation(p, uint64(loc)))
 	}
-	s.Value = sample.Value
-	return &s
+	sample.Value = mergedSample.Value
+	return sample
 }
 
 func (pu *profileUnPacker) unpackPeriodType(p *profile.Profile, idx uint64) error {
@@ -223,7 +231,7 @@ func (pu *profileUnPacker) unpackLocation(p *profile.Profile, id uint64) *profil
 		return nil
 	}
 
-	mergedLocation := pu.mergedProfile.Locations[id]
+	mergedLocation := pu.mergedProfile.Locations[id-1]
 	loc := &profile.Location{
 		ID:      uint64(len(p.Location) + 1),
 		Mapping: pu.unpackMapping(p, mergedLocation.MappingId),
@@ -309,6 +317,7 @@ type profileMerger struct {
 
 	functionTable map[functionKey]uint64
 	mappingTable  map[mappingKey]uint64
+	locationTable map[locationKey]uint64
 }
 
 func newProfileMerger() *profileMerger {
@@ -317,6 +326,7 @@ func newProfileMerger() *profileMerger {
 		stringTable:   make(map[string]int),
 		functionTable: make(map[functionKey]uint64),
 		mappingTable:  make(map[mappingKey]uint64),
+		locationTable: make(map[locationKey]uint64),
 	}
 }
 
@@ -348,7 +358,7 @@ func (pw *profileMerger) merge(ps ...*profile.Profile) {
 		pw.mergedProfile.NumSamples = append(pw.mergedProfile.NumSamples, uint64(len(p.Sample)))
 	}
 
-	pw.mergeLocations(ps...)
+	//pw.mergeLocations(ps...)
 	pw.mergeSamples(ps...)
 	pw.mergeSampleTypes(ps...)
 	pw.mergeTimeNanos(ps...)
@@ -465,30 +475,6 @@ func (pw *profileMerger) putMapping(src *profile.Mapping) uint64 {
 	return mapping.Id
 }
 
-func (pw *profileMerger) mergeLocations(ps ...*profile.Profile) {
-	size := 0
-	for _, p := range ps {
-		size += len(p.Location)
-	}
-
-	pw.mergedProfile.Locations = make([]*Location, 0, size)
-
-	for _, p := range ps {
-		for _, loc := range p.Location {
-			pw.mergedProfile.Locations = append(pw.mergedProfile.Locations, pw.asMergedProfileLocation(loc))
-		}
-	}
-}
-
-func (pw *profileMerger) asMergedProfileLocation(loc *profile.Location) *Location {
-	return &Location{
-		Id:        loc.ID,
-		MappingId: pw.putMapping(loc.Mapping),
-		Address:   loc.Address,
-		Line:      pw.asMergedProfileLines(loc.Line),
-	}
-}
-
 func (pw *profileMerger) asMergedSample(s *profile.Sample) *Sample {
 	mergedProfileSample := &Sample{
 		LocationId: make([]int64, 0, len(s.Location)),
@@ -496,7 +482,7 @@ func (pw *profileMerger) asMergedSample(s *profile.Sample) *Sample {
 	}
 
 	for _, loc := range s.Location {
-		mergedProfileSample.LocationId = append(mergedProfileSample.LocationId, int64(loc.ID))
+		mergedProfileSample.LocationId = append(mergedProfileSample.LocationId, int64(pw.putLocation(loc)))
 	}
 
 	return mergedProfileSample
@@ -555,7 +541,6 @@ func (pw *profileMerger) putLocation(src *profile.Location) uint64 {
 	}
 
 	loc := &Location{
-		Id:        uint64(len(pw.mergedProfile.Locations) + 1),
 		MappingId: pw.putMapping(src.Mapping),
 		Address:   src.Address,
 		Line:      make([]*Line, len(src.Line), len(src.Line)),
@@ -565,8 +550,24 @@ func (pw *profileMerger) putLocation(src *profile.Location) uint64 {
 		loc.Line[i] = pw.putLine(line)
 	}
 
+	lk := pw.getLocationKey(loc)
+	if l, ok := pw.locationTable[lk]; ok {
+		return l
+	}
+
+	loc.Id = uint64(len(pw.mergedProfile.Locations) + 1)
+	pw.locationTable[lk] = loc.Id
+
 	pw.mergedProfile.Locations = append(pw.mergedProfile.Locations, loc)
 	return loc.Id
+}
+
+func (pw *profileMerger) getLocationKey(loc *Location) locationKey {
+	return locationKey{
+		mappingID: loc.MappingId,
+		address:   loc.Address,
+		lines:     getLinesKey(loc.Line),
+	}
 }
 
 func (pw *profileMerger) putFunction(src *profile.Function) uint64 {
