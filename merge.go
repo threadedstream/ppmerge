@@ -1,14 +1,10 @@
-package main
+package ppmerge
 
 import (
-	"bytes"
 	"compress/gzip"
 	"errors"
-	"fmt"
 	"io"
-	"log"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 
@@ -16,59 +12,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const dir = "/Users/gildarov/toys/ppmerge/"
-
-func main() {
-	files := make([]*os.File, 0, 4)
-	profiles := make([]*profile.Profile, 0, 4)
-
-	for _, filename := range []string{"cpuprof1", "cpuprof2", "cpuprof3", "cpuprof4"} {
-		file, err := os.OpenFile(dir+filename, os.O_RDONLY, os.ModePerm)
-		if err != nil {
-			log.Fatal(err)
-		}
-		files = append(files, file)
-	}
-
-	for _, f := range files {
-		p, err := profile.Parse(f)
-		if err != nil {
-			log.Fatal(err)
-		}
-		profiles = append(profiles, p)
-	}
-
-	buffer := bytes.NewBuffer(nil)
-
-	for _, p := range profiles {
-		if err := p.Write(buffer); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	merger := newProfileMerger()
-	merger.merge(profiles...)
-
-	bufferCompact := bytes.NewBuffer(nil)
-	if err := merger.writeCompressed(bufferCompact); err != nil {
-		log.Fatal("failed to write compacted profile ", err)
-	}
-
-	println(buffer.Len())
-	println(bufferCompact.Len())
-}
-
-func getLinesKey(lines []*Line) string {
-	var result []string
-	for _, l := range lines {
-		result = append(result, fmt.Sprintf("%d%d", l.FunctionId, l.Line))
-	}
-	return strings.Join(result, "|")
-}
-
-type lineKey struct {
-	functionID, line int64
-}
 type functionKey struct {
 	name, systemName, filename, startLine int64
 }
