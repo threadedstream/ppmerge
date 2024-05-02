@@ -76,10 +76,34 @@ func TestHeapMerge(t *testing.T) {
 			require.Equal(t, recoveredOne.TimeNanos, tc.actualProfile.TimeNanos)
 		})
 	}
-
 }
 
-func getProfiles(t *testing.T, paths ...string) []*profile.Profile {
+func BenchmarkProfileMerger(b *testing.B) {
+	profiles := getProfiles(b, "hprof1", "hprof2", "hprof3", "hprof4")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		profileMerger := NewProfileMerger()
+		profileMerger.Merge(profiles...)
+	}
+}
+
+func BenchmarkProfileUnPacker(b *testing.B) {
+	profiles := getProfiles(b, "hprof1", "hprof2", "hprof3", "hprof4")
+
+	profileMerger := NewProfileMerger()
+	mergedProfile := profileMerger.Merge(profiles...)
+
+	unpacker := NewProfileUnPacker(mergedProfile)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, err := unpacker.Unpack(uint64(i % 4))
+		require.NoError(b, err)
+	}
+}
+
+func getProfiles(t require.TestingT, paths ...string) []*profile.Profile {
 	dir := "./testdata/"
 	var profiles []*profile.Profile
 	for _, profileName := range paths {

@@ -111,6 +111,30 @@ If you have additional storage like PostgreSQL or Clickhouse to store profiles' 
 ![scheme](./assets/merge_prof_ref.png)
 ## Space optimization
 Unlike pprof.Merge, this merge algorithm is able to store profiles of any sample type.
-Tests show that win in space lies in space between 12 to 53%. The latter heavily depends on what kind of 
-profiles you merge together. TL;DR The best one is when you merge profiles that have identical sample types and are profiles of the same app.
+Tests show that win lies in space between 12 to 53%. The latter heavily depends on what kind of 
+profiles you merge together. \
+**TL;DR** The best one is when you merge profiles that have identical sample types and are profiles of the same app.
 The worst one is when you merge profiles of different sample types together, i.e heap+cpu+mutex+whatever....
+
+## Benchmarks
+
+**Hardware**: Intel Core i5 12400f, RAM 16GB ddr5 
+
+
+**Merger**
+```
+BenchmarkProfileMerger-12    	   17144	     69246 ns/op	   72093 B/op	     905 allocs/op
+BenchmarkProfileMerger-12    	   17539	     68658 ns/op	   72094 B/op	     905 allocs/op
+BenchmarkProfileMerger-12    	   17433	     68604 ns/op	   72099 B/op	     905 allocs/op
+BenchmarkProfileMerger-12    	   17493	     68869 ns/op	   72090 B/op	     905 allocs/op
+BenchmarkProfileMerger-12    	   17227	     68072 ns/op	   72082 B/op	     905 allocs/op
+```
+
+**Unpacker**
+```
+BenchmarkProfileUnPacker-12    	  876289	      1287 ns/op	    1834 B/op	      18 allocs/op
+BenchmarkProfileUnPacker-12    	  926282	      1275 ns/op	    1834 B/op	      18 allocs/op
+BenchmarkProfileUnPacker-12    	  886675	      1297 ns/op	    1834 B/op	      18 allocs/op
+BenchmarkProfileUnPacker-12    	 1000000	      1316 ns/op	    1834 B/op	      18 allocs/op
+BenchmarkProfileUnPacker-12    	  926168	      1302 ns/op	    1834 B/op	      18 allocs/op
+```
