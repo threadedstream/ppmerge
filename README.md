@@ -4,7 +4,7 @@ Simple! Just merge multiple pprof profiles into a single one
 
 ## Why?
 
-Very useful in cases when you need to store your profiles in some object storage (s3 for instance). 
+Very useful in cases when you need to store your profiles in raw format in some object storage (s3 for instance). 
 As number of profiles grows, the storage requirements do as well. 
 
 There's already a way to represent several profiles in a compact way by just using
@@ -61,6 +61,46 @@ is stored as a slice.
 
 Third optimization consisted in eliminating unused metadata. During merge process algorithm stores only metadata that samples have reference to.
 
+## API 
+One example needed to describe it
+```go
+package main 
+
+import (
+	"github.com/threadedstream/ppmerge"
+	"github.com/google/pprof/profile"
+)
+
+func main(){
+	var profiles []*profile.Profile
+	paths := []string{....}
+	for _, profileName := range paths {
+		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
+		if err != nil {
+			log.Fatal(err)
+        }
+		prof, err := profile.Parse(file)
+        if err != nil {
+			log.Fatal(err)
+        }
+		profiles = append(profiles, prof)
+	}
+
+	profileMerger := ppmerge.NewProfileMerger()
+	
+	// merge profiles
+	mergedProfile := profileMerger.Merge(profiles...)
+
+	unpacker := ppmerge.NewProfileUnPacker(mergedProfile)
+	recoveredProf, err := unpacker.Unpack(0)
+    if err != nil {
+		log.Fatal(err)
+    }
+	/// do something with recoveredProf
+}
+```
+
+
 ## How to recover profiles
 
 It is assumed that you "remember" the order profiles were passed to merge function. 
@@ -69,4 +109,6 @@ If you have additional storage like PostgreSQL or Clickhouse to store profiles' 
 ![scheme](./assets/merge_prof_ref.png)
 ## Space optimization
 Unlike pprof.Merge, this merge algorithm is able to store profiles of any sample type.
-
+Tests show that win in space lies in space between 12 to 53%. The latter heavily depends on what kind of 
+profiles you merge together. TL;DR The best one is when you merge profiles that have identical sample types and are profiles of the same app.
+The worst one is when you merge profiles of different sample types together, i.e heap+cpu+mutex+whatever....
