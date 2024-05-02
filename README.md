@@ -94,6 +94,7 @@ func main(){
 	// merge profiles
 	mergedProfile := profileMerger.Merge(profiles...)
 	unpacker := ppmerge.NewProfileUnPacker(mergedProfile)
+	// unpack profile
 	recoveredProf, err := unpacker.Unpack(0)
 	if err != nil {
 		log.Fatal(err)
