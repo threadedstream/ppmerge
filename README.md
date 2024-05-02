@@ -66,6 +66,7 @@ Third optimization consisted in eliminating unused metadata. During merge proces
 It is assumed that you "remember" the order profiles were passed to merge function. 
 If you have additional storage like PostgreSQL or Clickhouse to store profiles' metadata, you can follow the scheme below
 
+![scheme](./assets/merge_prof_ref.png)
 ## Space optimization
 Unlike pprof.Merge, this merge algorithm is able to store profiles of any sample type.
 

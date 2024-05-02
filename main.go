@@ -35,7 +35,6 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		//p = p.Compact()
 		profiles = append(profiles, p)
 	}
 
@@ -57,24 +56,6 @@ func main() {
 
 	println(buffer.Len())
 	println(bufferCompact.Len())
-	merger.countIdenticalLocations()
-}
-
-func (pw *profileMerger) countIdenticalLocations() {
-	m := map[locationKey]int{}
-	constructKey := func(l *Location) locationKey {
-		return locationKey{
-			addr:  l.Address,
-			lines: getLinesKey(l.Line),
-		}
-	}
-
-	for _, l := range pw.mergedProfile.Locations {
-		key := constructKey(l)
-		m[key]++
-	}
-
-	fmt.Println(m)
 }
 
 func getLinesKey(lines []*Line) string {
@@ -294,22 +275,6 @@ func (pw *profileMerger) unpackLines(lines []*Line, functions []*profile.Functio
 	return result
 }
 
-//func (pw *profileMerger) unpackFunction(offset uint64) *profile.Function {
-//	var p profile.Function
-//	p.ID = uint64(pw.mergedProfile.Functions[offset])
-//	offset++
-//	p.Name = pw.getString(int(pw.mergedProfile.Functions[offset]))
-//	offset++
-//	p.SystemName = pw.getString(int(pw.mergedProfile.Functions[offset]))
-//	offset++
-//	p.Filename = pw.getString(int(pw.mergedProfile.Functions[offset]))
-//	offset++
-//	p.StartLine = pw.mergedProfile.Functions[offset]
-//	offset++
-//
-//	return &p
-//}
-
 func (pw *profileMerger) writeCompressed(w io.Writer) error {
 	// Write writes the profile as a gzip-compressed marshaled protobuf.
 	zw := gzip.NewWriter(w)
@@ -338,8 +303,6 @@ func (pw *profileMerger) merge(ps ...*profile.Profile) {
 		pw.mergedProfile.NumSamples = append(pw.mergedProfile.NumSamples, uint64(len(p.Sample)))
 	}
 
-	//pw.mergeMappings(ps...)
-	//pw.mergeFunctions(ps...)
 	pw.mergeLocations(ps...)
 	pw.mergeSamples(ps...)
 	pw.mergeSampleTypes(ps...)
@@ -353,28 +316,6 @@ func (pw *profileMerger) merge(ps ...*profile.Profile) {
 		pw.mergedProfile.StringTable[id] = st
 	}
 }
-
-//func (pw *profileMerger) countIdenticalLocations() {
-//	type locationKey struct {
-//		mappingID  int
-//		address    int
-//		functionID int
-//		line       int
-//	}
-//
-//	m := map[locationKey]int{}
-//	for _, loc := range pw.mergedProfile.Locations {
-//		key := locationKey{
-//			mappingID:  int(loc.MappingId),
-//			address:    int(loc.Address),
-//			functionID: int(loc.Line[0].FunctionId),
-//			line:       int(loc.Line[0].Line),
-//		}
-//		m[key]++
-//	}
-//
-//	fmt.Println(m)
-//}
 
 func (pw *profileMerger) mergeSamples(ps ...*profile.Profile) {
 	// allocate samples slice beforehand
@@ -443,71 +384,6 @@ func (pw *profileMerger) mergeSampleTypes(ps ...*profile.Profile) {
 		}
 	}
 }
-
-func (pw *profileMerger) mergeMappings(ps ...*profile.Profile) {
-	//size := 0
-	//for _, p := range ps {
-	//	size += len(p.Mapping)
-	//}
-	//pw.mergedProfile.Mappings = make([]int64, 0, size*6)
-
-	for _, p := range ps {
-		for _, m := range p.Mapping {
-			pw.putMapping(m)
-		}
-	}
-}
-
-//func (pw *profileMerger) mergeFunctions(ps ...*profile.Profile) {
-//	size := 0
-//	for _, p := range ps {
-//		size += len(p.Function)
-//	}
-//
-//	pw.mergedProfile.Functions = make([]*FunctionCompact, 0, size*5)
-//
-//	//m := make(map[functionKey]uint64)
-//
-//	//getFunctionOrRef := func(fn *profile.Function, functionsSoFar int) *FunctionOrFunctionRef {
-//	//	key := functionKey{
-//	//		name:       pw.putString(fn.Name),
-//	//		systemName: pw.putString(fn.SystemName),
-//	//		filename:   pw.putString(fn.Filename),
-//	//		line:       int(fn.StartLine),
-//	//	}
-//	//
-//	//	id, ok := m[key]
-//	//	if !ok {
-//	//		m[key] = fn.ID
-//	//		return &FunctionOrFunctionRef{
-//	//			FunctionOrRef: &FunctionOrFunctionRef_Function{
-//	//				Function: &Function{
-//	//					Id:         uint64(functionsSoFar),
-//	//					FunctionId: fn.ID,
-//	//					Name:       int64(key.name),
-//	//					SystemName: int64(key.systemName),
-//	//					Filename:   int64(key.filename),
-//	//					StartLine:  int64(key.line),
-//	//				},
-//	//			},
-//	//		}
-//	//	}
-//	//	return &FunctionOrFunctionRef{
-//	//		FunctionOrRef: &FunctionOrFunctionRef_Ref{
-//	//			Ref: &FunctionRef{
-//	//				Id:            uint64(functionsSoFar),
-//	//				FunctionRefId: id,
-//	//			},
-//	//		},
-//	//	}
-//	//}
-//
-//	for _, p := range ps {
-//		for _, f := range p.Function {
-//			pw.putFunction()
-//		}
-//	}
-//}
 
 func (pw *profileMerger) mergeLocations(ps ...*profile.Profile) {
 	size := 0
