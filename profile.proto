@@ -3,7 +3,7 @@ syntax = "proto3";
 package dummyprofile;
 
 
-option go_package = "pkg/main";
+option go_package = "github.com/threadedstream/ppmerge";
 
 
 // MergedProfile represents several profiles in a single profile
