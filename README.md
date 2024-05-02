@@ -63,6 +63,7 @@ Third optimization consisted in eliminating unused metadata. During merge proces
 
 ## API 
 One example needed to describe it
+
 ```go
 package main 
 
@@ -73,33 +74,33 @@ import (
 
 func main(){
 	var profiles []*profile.Profile
-	paths := []string{....}
+	paths := []string{""} // your profiles
+
 	for _, profileName := range paths {
-		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
+		file, err := os.OpenFile(profileName, os.O_RDONLY, 0666)
 		if err != nil {
 			log.Fatal(err)
-        }
+		}
+
 		prof, err := profile.Parse(file)
-        if err != nil {
+		if err != nil {
 			log.Fatal(err)
-        }
+		}
+
 		profiles = append(profiles, prof)
 	}
 
 	profileMerger := ppmerge.NewProfileMerger()
-	
 	// merge profiles
 	mergedProfile := profileMerger.Merge(profiles...)
-
 	unpacker := ppmerge.NewProfileUnPacker(mergedProfile)
 	recoveredProf, err := unpacker.Unpack(0)
-    if err != nil {
+	if err != nil {
 		log.Fatal(err)
-    }
+	}
 	/// do something with recoveredProf
 }
 ```
-
 
 ## How to recover profiles
 
