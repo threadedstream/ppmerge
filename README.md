@@ -1,3 +1,5 @@
+![ppmerge workflow](https://github.com/threadedstream/ppmerge/actions/workflows/go.yml/badge.svg)
+
 # What?!
 
 Simple! Just merge multiple pprof profiles into a single one 
