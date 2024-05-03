@@ -1,6 +1,7 @@
 package ppmerge
 
 import (
+	"bytes"
 	"github.com/google/pprof/profile"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -76,6 +77,24 @@ func TestHeapMerge(t *testing.T) {
 			require.Equal(t, recoveredOne.TimeNanos, tc.actualProfile.TimeNanos)
 		})
 	}
+}
+
+func TestMergeWrite(t *testing.T) {
+	profiles := getProfiles(t, "hprof1", "hprof2", "hprof3", "hprof4")
+
+	profileMerger := NewProfileMerger()
+	mergedProfile := profileMerger.Merge(profiles...)
+	require.NotNil(t, mergedProfile)
+
+	compressedBB := bytes.NewBuffer(nil)
+	require.NoError(t, profileMerger.WriteCompressed(compressedBB))
+	require.Greater(t, compressedBB.Len(), 0)
+
+	uncompressedBB := bytes.NewBuffer(nil)
+	require.NoError(t, profileMerger.WriteUncompressed(uncompressedBB))
+	require.Greater(t, uncompressedBB.Len(), 0)
+
+	require.Greater(t, uncompressedBB.Len(), compressedBB.Len())
 }
 
 func BenchmarkProfileMerger(b *testing.B) {

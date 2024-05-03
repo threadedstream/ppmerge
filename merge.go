@@ -271,7 +271,7 @@ func NewProfileMerger() *ProfileMerger {
 	}
 }
 
-func (pw *ProfileMerger) writeCompressed(w io.Writer) error {
+func (pw *ProfileMerger) WriteCompressed(w io.Writer) error {
 	// Write writes the profile as a gzip-compressed marshaled protobuf.
 	zw := gzip.NewWriter(w)
 	defer zw.Close()
@@ -281,6 +281,15 @@ func (pw *ProfileMerger) writeCompressed(w io.Writer) error {
 	}
 
 	_, err = zw.Write(serialized)
+	return err
+}
+
+func (pw *ProfileMerger) WriteUncompressed(w io.Writer) error {
+	serialized, err := proto.Marshal(pw.mergedProfile)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(serialized)
 	return err
 }
 
