@@ -2,11 +2,12 @@ package ppmerge
 
 import (
 	"compress/gzip"
+	"io"
+	"math"
+
 	"github.com/google/pprof/profile"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
-	"io"
-	"math"
 )
 
 type functionKey struct {
@@ -414,40 +415,20 @@ func (pw *ProfileMerger) putMapping(src *profile.Mapping) uint64 {
 	}
 
 	mapping := &Mapping{
-		Id:          uint64(len(pw.mergedProfile.Mappings) + 1),
-		MemoryStart: src.Start,
-		MemoryLimit: src.Limit,
-		FileOffset:  src.Offset,
-		Filename:    int64(pw.putString(src.File)),
-		BuildId:     int64(pw.putString(src.BuildID)),
+		Id:              uint64(len(pw.mergedProfile.Mappings) + 1),
+		MemoryStart:     src.Start,
+		MemoryLimit:     src.Limit,
+		FileOffset:      src.Offset,
+		Filename:        int64(pw.putString(src.File)),
+		BuildId:         int64(pw.putString(src.BuildID)),
+		HasFilenames:    src.HasFilenames,
+		HasFunctions:    src.HasFunctions,
+		HasInlineFrames: src.HasInlineFrames,
+		HasLineNumbers:  src.HasInlineFrames,
 	}
 	pw.mappingTable[key] = mapping.Id
 	pw.mergedProfile.Mappings = append(pw.mergedProfile.Mappings, mapping)
 	return mapping.Id
-}
-
-func (pw *ProfileMerger) mergeLocations(ps ...*profile.Profile) {
-	size := 0
-	for _, p := range ps {
-		size += len(p.Location)
-	}
-
-	pw.mergedProfile.Locations = make([]*Location, 0, size)
-
-	for _, p := range ps {
-		for _, loc := range p.Location {
-			pw.mergedProfile.Locations = append(pw.mergedProfile.Locations, pw.asMergedProfileLocation(loc))
-		}
-	}
-}
-
-func (pw *ProfileMerger) asMergedProfileLocation(loc *profile.Location) *Location {
-	return &Location{
-		Id:        loc.ID,
-		MappingId: pw.putMapping(loc.Mapping),
-		Address:   loc.Address,
-		Line:      pw.asMergedProfileLines(loc.Line),
-	}
 }
 
 func (pw *ProfileMerger) asMergedSample(s *profile.Sample) *Sample {
@@ -520,6 +501,7 @@ func (pw *ProfileMerger) putLocation(src *profile.Location) uint64 {
 		MappingId: pw.putMapping(src.Mapping),
 		Address:   src.Address,
 		Line:      make([]*Line, len(src.Line), len(src.Line)),
+		IsFolded:  src.IsFolded,
 	}
 
 	for i, line := range src.Line {

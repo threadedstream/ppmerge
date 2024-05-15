@@ -2,10 +2,11 @@ package ppmerge
 
 import (
 	"bytes"
-	"github.com/google/pprof/profile"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+
+	"github.com/google/pprof/profile"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHeapMerge(t *testing.T) {
@@ -95,6 +96,12 @@ func TestMergeWrite(t *testing.T) {
 	require.Greater(t, uncompressedBB.Len(), 0)
 
 	require.Greater(t, uncompressedBB.Len(), compressedBB.Len())
+
+	noCompactBB := bytes.NewBuffer(nil)
+	for _, p := range profiles {
+		require.NoError(t, p.Write(noCompactBB))
+	}
+	require.Less(t, compressedBB.Len(), noCompactBB.Len())
 }
 
 func BenchmarkProfileMerger(b *testing.B) {
