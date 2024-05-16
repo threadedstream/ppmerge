@@ -3,7 +3,7 @@ module github.com/threadedstream/ppmerge
 go 1.21.0
 
 require (
-	github.com/google/pprof v0.0.0-20240424215950-a892ee059fd6
+	github.com/google/pprof v0.0.0-20220829040838-70bd9ae97f40
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/protobuf v1.28.1

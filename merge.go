@@ -4,6 +4,8 @@ import (
 	"compress/gzip"
 	"io"
 	"math"
+	"strconv"
+	"strings"
 
 	"github.com/google/pprof/profile"
 	"github.com/pkg/errors"
@@ -17,6 +19,12 @@ type functionKey struct {
 type mappingKey struct {
 	start, limit, offset uint64
 	buildIDOrFile        int64
+}
+
+type locationKey struct {
+	mappingID, address uint64
+	lines              string
+	isFolded           bool
 }
 
 // ProfileUnPacker recovers any of the profiles stored inside mergedProfile
@@ -204,7 +212,7 @@ func (pu *ProfileUnPacker) getString(id int) string {
 	if id < 0 || id > len(pu.mergedProfile.StringTable) {
 		return ""
 	}
-	return pu.mergedProfile.StringTable[id]
+	return pu.mergedProfile.StringTable[id-1]
 }
 
 func (pu *ProfileUnPacker) unpackFunction(p *profile.Profile, id uint64) *profile.Function {
@@ -261,6 +269,7 @@ type ProfileMerger struct {
 
 	functionTable map[functionKey]uint64
 	mappingTable  map[mappingKey]uint64
+	locationTable map[locationKey]uint64
 }
 
 func NewProfileMerger() *ProfileMerger {
@@ -269,6 +278,7 @@ func NewProfileMerger() *ProfileMerger {
 		stringTable:   make(map[string]int),
 		functionTable: make(map[functionKey]uint64),
 		mappingTable:  make(map[mappingKey]uint64),
+		locationTable: make(map[locationKey]uint64),
 	}
 }
 
@@ -318,7 +328,7 @@ func (pw *ProfileMerger) Merge(ps ...*profile.Profile) *MergedProfile {
 
 	pw.mergedProfile.StringTable = make([]string, len(pw.stringTable), len(pw.stringTable))
 	for st, id := range pw.stringTable {
-		pw.mergedProfile.StringTable[id] = st
+		pw.mergedProfile.StringTable[id-1] = st
 	}
 
 	return pw.mergedProfile
@@ -397,25 +407,7 @@ func (pw *ProfileMerger) putMapping(src *profile.Mapping) uint64 {
 		return math.MaxUint64
 	}
 
-	key := mappingKey{
-		start:  src.Start,
-		limit:  src.Limit,
-		offset: src.Offset,
-	}
-	switch {
-	case src.File != "":
-		key.buildIDOrFile = int64(pw.putString(src.File))
-	case src.BuildID != "":
-		key.buildIDOrFile = int64(pw.putString(src.BuildID))
-	default:
-	}
-
-	if mappingID, ok := pw.mappingTable[key]; ok {
-		return mappingID
-	}
-
 	mapping := &Mapping{
-		Id:              uint64(len(pw.mergedProfile.Mappings) + 1),
 		MemoryStart:     src.Start,
 		MemoryLimit:     src.Limit,
 		FileOffset:      src.Offset,
@@ -426,6 +418,14 @@ func (pw *ProfileMerger) putMapping(src *profile.Mapping) uint64 {
 		HasInlineFrames: src.HasInlineFrames,
 		HasLineNumbers:  src.HasInlineFrames,
 	}
+
+	key := pw.getMappingKey(mapping)
+	if mappingID, ok := pw.mappingTable[key]; ok {
+		return mappingID
+	}
+
+	mapping.Id = uint64(len(pw.mergedProfile.Mappings) + 1)
+
 	pw.mappingTable[key] = mapping.Id
 	pw.mergedProfile.Mappings = append(pw.mergedProfile.Mappings, mapping)
 	return mapping.Id
@@ -469,19 +469,55 @@ func (pw *ProfileMerger) asMergedProfileLine(line profile.Line) *Line {
 func (pw *ProfileMerger) putString(val string) int {
 	id, ok := pw.stringTable[val]
 	if !ok {
-		id = len(pw.stringTable)
+		id = len(pw.stringTable) + 1
 		pw.stringTable[val] = id
 	}
 	return id
 }
 
-func (pw *ProfileMerger) getFunctionKey(fn *profile.Function) functionKey {
+func (pw *ProfileMerger) getFunctionKey(fn *Function) functionKey {
 	return functionKey{
-		name:       int64(pw.putString(fn.Name)),
-		systemName: int64(pw.putString(fn.SystemName)),
-		filename:   int64(pw.putString(fn.Filename)),
+		name:       fn.Name,
+		systemName: fn.SystemName,
+		filename:   fn.Filename,
 		startLine:  fn.StartLine,
 	}
+}
+
+func (pw *ProfileMerger) getMappingKey(m *Mapping) mappingKey {
+	key := mappingKey{
+		start:  m.MemoryStart,
+		limit:  m.MemoryLimit,
+		offset: m.FileOffset,
+	}
+	switch {
+	case m.Filename > 0:
+		key.buildIDOrFile = m.Filename
+	case m.BuildId > 0:
+		key.buildIDOrFile = m.BuildId
+	default:
+	}
+
+	return key
+}
+
+func (pw *ProfileMerger) getLocationKey(loc *Location) locationKey {
+	key := locationKey{
+		mappingID: loc.MappingId,
+		address:   loc.Address,
+		isFolded:  loc.IsFolded,
+	}
+
+	lines := make([]string, len(loc.Line)*2)
+	for i, line := range loc.Line {
+		if line.FunctionId > 0 {
+			lines[i*2] = strconv.FormatUint(line.FunctionId, 16)
+		}
+		lines[i*2+1] = strconv.FormatInt(line.Line, 16)
+	}
+	key.lines = strings.Join(lines, "|")
+
+	return key
 }
 
 func (pw *ProfileMerger) putLine(src profile.Line) *Line {
@@ -497,7 +533,6 @@ func (pw *ProfileMerger) putLocation(src *profile.Location) uint64 {
 	}
 
 	loc := &Location{
-		Id:        uint64(len(pw.mergedProfile.Locations) + 1),
 		MappingId: pw.putMapping(src.Mapping),
 		Address:   src.Address,
 		Line:      make([]*Line, len(src.Line), len(src.Line)),
@@ -508,6 +543,13 @@ func (pw *ProfileMerger) putLocation(src *profile.Location) uint64 {
 		loc.Line[i] = pw.putLine(line)
 	}
 
+	key := pw.getLocationKey(loc)
+	if locID, ok := pw.locationTable[key]; ok {
+		return locID
+	}
+
+	loc.Id = uint64(len(pw.mergedProfile.Locations) + 1)
+	pw.locationTable[key] = loc.Id
 	pw.mergedProfile.Locations = append(pw.mergedProfile.Locations, loc)
 	return loc.Id
 }
@@ -517,17 +559,19 @@ func (pw *ProfileMerger) putFunction(src *profile.Function) uint64 {
 		return math.MaxUint64
 	}
 
-	key := pw.getFunctionKey(src)
-	if functionID, ok := pw.functionTable[key]; ok {
-		return functionID
-	}
 	f := &Function{
-		Id:         uint64(len(pw.mergedProfile.Functions) + 1),
 		Name:       int64(pw.putString(src.Name)),
 		SystemName: int64(pw.putString(src.SystemName)),
 		Filename:   int64(pw.putString(src.Filename)),
 		StartLine:  src.StartLine,
 	}
+
+	key := pw.getFunctionKey(f)
+	if functionID, ok := pw.functionTable[key]; ok {
+		return functionID
+	}
+
+	f.Id = uint64(len(pw.mergedProfile.Functions) + 1)
 	pw.functionTable[key] = f.Id
 	pw.mergedProfile.Functions = append(pw.mergedProfile.Functions, f)
 	return f.Id
