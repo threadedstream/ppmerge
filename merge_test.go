@@ -25,22 +25,22 @@ func TestHeapMerge(t *testing.T) {
 
 	for _, tc := range []testCase{
 		{
-			name:                "heap profile 1",
+			name:                "parca_heap profile 1",
 			recoveredProfileIdx: 0,
 			actualProfile:       profiles[0],
 		},
 		{
-			name:                "heap profile 2",
+			name:                "parca_heap profile 2",
 			recoveredProfileIdx: 1,
 			actualProfile:       profiles[1],
 		},
 		{
-			name:                "heap profile 3",
+			name:                "parca_heap profile 3",
 			recoveredProfileIdx: 2,
 			actualProfile:       profiles[2],
 		},
 		{
-			name:                "heap profile 4",
+			name:                "parca_heap profile 4",
 			recoveredProfileIdx: 3,
 			actualProfile:       profiles[3],
 		},
@@ -98,6 +98,20 @@ func TestMergeWrite(t *testing.T) {
 	require.Greater(t, uncompressedBB.Len(), compressedBB.Len())
 
 	noCompactBB := bytes.NewBuffer(nil)
+	for _, p := range profiles {
+		require.NoError(t, p.Write(noCompactBB))
+	}
+	require.Less(t, compressedBB.Len(), noCompactBB.Len())
+
+	// merge profiles with different sample types
+	profiles = getProfiles(t, "parca_heap", "parca_cpu", "parca_goroutine")
+	mergedProfile = profileMerger.Merge(profiles...)
+	require.NotNil(t, mergedProfile)
+
+	compressedBB = bytes.NewBuffer(nil)
+	require.NoError(t, profileMerger.WriteCompressed(compressedBB))
+
+	noCompactBB = bytes.NewBuffer(nil)
 	for _, p := range profiles {
 		require.NoError(t, p.Write(noCompactBB))
 	}
