@@ -1,6 +1,6 @@
 module github.com/threadedstream/ppmerge
 
-go 1.21.0
+go 1.21
 
 require (
 	github.com/google/pprof v0.0.0-20220829040838-70bd9ae97f40
