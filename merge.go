@@ -1,6 +1,7 @@
 package ppmerge
 
 import (
+	"bytes"
 	"compress/gzip"
 	"io"
 	"math"
@@ -44,6 +45,30 @@ func NewProfileUnPacker(mergedProfile *MergedProfile) *ProfileUnPacker {
 		mappingByID:   make(map[uint64]*profile.Mapping),
 		locationByID:  make(map[uint64]*profile.Location),
 	}
+}
+
+func (pu *ProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*profile.Profile, error) {
+	bb := bytes.NewBuffer(compressedRawProfile)
+
+	gzReader, err := gzip.NewReader(bb)
+	if err != nil {
+		return nil, err
+	}
+
+	rawProfile, err := io.ReadAll(gzReader)
+	if err != nil {
+		return nil, err
+	}
+
+	if pu.mergedProfile == nil {
+		pu.mergedProfile = new(MergedProfile)
+	}
+
+	if err = proto.Unmarshal(rawProfile, pu.mergedProfile); err != nil {
+		return nil, err
+	}
+
+	return pu.Unpack(idx)
 }
 
 func (pu *ProfileUnPacker) Unpack(idx uint64) (*profile.Profile, error) {

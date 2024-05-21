@@ -118,6 +118,23 @@ func TestMergeWrite(t *testing.T) {
 	require.Less(t, compressedBB.Len(), noCompactBB.Len())
 }
 
+func TestMergeUnpack(t *testing.T) {
+	profiles := getProfiles(t, "hprof1", "hprof2", "hprof3", "hprof4")
+
+	profileMerger := NewProfileMerger()
+	mergedProfile := profileMerger.Merge(profiles...)
+	require.NotNil(t, mergedProfile)
+
+	compressedBB := bytes.NewBuffer(nil)
+	require.NoError(t, profileMerger.WriteCompressed(compressedBB))
+	require.Greater(t, compressedBB.Len(), 0)
+
+	unpacker := NewProfileUnPacker(nil)
+	p, err := unpacker.UnpackRaw(compressedBB.Bytes(), 0)
+	require.NoError(t, err)
+	require.NotNil(t, p)
+}
+
 func BenchmarkProfileMerger(b *testing.B) {
 	profiles := getProfiles(b, "hprof1", "hprof2", "hprof3", "hprof4")
 
