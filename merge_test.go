@@ -2,6 +2,7 @@ package ppmerge
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"testing"
 
@@ -119,20 +120,73 @@ func TestMergeWrite(t *testing.T) {
 }
 
 func TestMergeUnpack(t *testing.T) {
-	profiles := getProfiles(t, "hprof1", "hprof2", "hprof3", "hprof4")
+	t.Run("general merge unpack", func(t *testing.T) {
+		profiles := getProfiles(t, "hprof1", "hprof2", "hprof3", "hprof4")
 
-	profileMerger := NewProfileMerger()
-	mergedProfile := profileMerger.Merge(profiles...)
-	require.NotNil(t, mergedProfile)
+		profileMerger := NewProfileMerger()
+		mergedProfile := profileMerger.Merge(profiles...)
+		require.NotNil(t, mergedProfile)
 
-	compressedBB := bytes.NewBuffer(nil)
-	require.NoError(t, profileMerger.WriteCompressed(compressedBB))
-	require.Greater(t, compressedBB.Len(), 0)
+		compressedBB := bytes.NewBuffer(nil)
+		require.NoError(t, profileMerger.WriteCompressed(compressedBB))
+		require.Greater(t, compressedBB.Len(), 0)
 
-	unpacker := NewProfileUnPacker(nil)
-	p, err := unpacker.UnpackRaw(compressedBB.Bytes(), 0)
-	require.NoError(t, err)
-	require.NotNil(t, p)
+		unpacker := NewProfileUnPacker(nil)
+		p, err := unpacker.UnpackRaw(compressedBB.Bytes(), 0)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+	})
+
+	t.Run("merge unpack debug goroutine profiles", func(t *testing.T) {
+		profiles := getDebugProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_2")
+
+		profileMerger := NewByteProfileMerger()
+		mergedProfile := profileMerger.Merge(profiles...)
+		require.NotNil(t, mergedProfile)
+
+		unpacker := NewByteProfileUnPacker(mergedProfile)
+		p, err := unpacker.Unpack(0)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[0], p)
+
+		p, err = unpacker.Unpack(1)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[1], p)
+
+		p, err = unpacker.Unpack(2)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[2], p)
+	})
+
+	t.Run("merge unpack raw debug goroutine profiles", func(t *testing.T) {
+		profiles := getDebugProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_2")
+
+		profileMerger := NewByteProfileMerger()
+		mergedProfile := profileMerger.Merge(profiles...)
+		require.NotNil(t, mergedProfile)
+
+		bb := bytes.NewBuffer(nil)
+		require.NoError(t, profileMerger.WriteCompressed(bb))
+
+		unpacker := NewByteProfileUnPacker(mergedProfile)
+		p, err := unpacker.UnpackRaw(bb.Bytes(), 0)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[0], p)
+
+		p, err = unpacker.UnpackRaw(bb.Bytes(), 1)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[1], p)
+
+		p, err = unpacker.UnpackRaw(bb.Bytes(), 2)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[2], p)
+	})
 }
 
 func BenchmarkProfileMerger(b *testing.B) {
@@ -169,6 +223,20 @@ func getProfiles(t require.TestingT, paths ...string) []*profile.Profile {
 		prof, err := profile.Parse(file)
 		require.NoError(t, err)
 		profiles = append(profiles, prof)
+	}
+
+	return profiles
+}
+
+func getDebugProfiles(t require.TestingT, paths ...string) [][]byte {
+	dir := "./testdata/"
+	profiles := make([][]byte, len(paths))
+	for i, profileName := range paths {
+		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
+		require.NoError(t, err)
+		p, err := io.ReadAll(file)
+		require.NoError(t, err)
+		profiles[i] = p
 	}
 
 	return profiles

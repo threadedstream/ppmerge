@@ -1,0 +1,367 @@
+goroutine profile: total 132
+23 @ 0x1003abca8 0x1003bf1e8 0x10332e978 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x10332e977	github.com/parca-dev/parca/pkg/scrape.(*scrapeLoop).run+0x787	/Users/gildarov/toys/parca/pkg/scrape/scrape.go:590
+
+18 @ 0x1003abca8 0x1003bf1e8 0x100951ca8 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x100951ca7	google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run+0xc7	/Users/gildarov/toys/parca/vendor/google.golang.org/grpc/internal/grpcsync/callback_serializer.go:76
+
+6 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x10045f6c0 0x10045f6b1 0x10067d5e8 0x10068cbf4 0x1005065b4 0x100454660 0x10097f748 0x10097f71d 0x10097fe38 0x1009c9118 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f					/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27					/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x10045f6bf	internal/poll.(*pollDesc).waitRead+0x1ff				/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:89
+#	0x10045f6b0	internal/poll.(*FD).Read+0x1f0						/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:164
+#	0x10067d5e7	net.(*netFD).Read+0x27							/Users/gildarov/.gvm/gos/go1.22/src/net/fd_posix.go:55
+#	0x10068cbf3	net.(*conn).Read+0x33							/Users/gildarov/.gvm/gos/go1.22/src/net/net.go:179
+#	0x1005065b3	bufio.(*Reader).Read+0x1b3						/Users/gildarov/.gvm/gos/go1.22/src/bufio/bufio.go:241
+#	0x10045465f	io.ReadAtLeast+0x9f							/Users/gildarov/.gvm/gos/go1.22/src/io/io.go:335
+#	0x10097f747	io.ReadFull+0x57							/Users/gildarov/.gvm/gos/go1.22/src/io/io.go:354
+#	0x10097f71c	golang.org/x/net/http2.readFrameHeader+0x2c				/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/frame.go:237
+#	0x10097fe37	golang.org/x/net/http2.(*Framer).ReadFrame+0x77				/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/frame.go:498
+#	0x1009c9117	google.golang.org/grpc/internal/transport.(*http2Client).reader+0x1a7	/Users/gildarov/toys/parca/vendor/google.golang.org/grpc/internal/transport/http2_client.go:1593
+
+6 @ 0x1003abca8 0x1003bf1e8 0x10098ac90 0x100989114 0x103373c88 0x103382f6c 0x100776058 0x10077946c 0x100774c28 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x10098ac8f	golang.org/x/net/http2.(*serverConn).serve+0x6ff					/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/server.go:940
+#	0x100989113	golang.org/x/net/http2.(*Server).ServeConn+0x963					/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/server.go:531
+#	0x103373c87	golang.org/x/net/http2/h2c.h2cHandler.ServeHTTP+0x2c7					/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/h2c/h2c.go:97
+#	0x103382f6b	github.com/parca-dev/parca/pkg/server.grpcHandlerFunc.(*Cors).Handler.func7+0x19b	/Users/gildarov/toys/parca/vendor/github.com/go-chi/cors/cors.go:228
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37							/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x10077946b	net/http.serverHandler.ServeHTTP+0xbb							/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:3137
+#	0x100774c27	net/http.(*conn).serve+0x507								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2039
+
+6 @ 0x1003abca8 0x1003bf1e8 0x1009b6e5c 0x1009b76cc 0x1009c0050 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1009b6e5b	google.golang.org/grpc/internal/transport.(*controlBuffer).get+0x14b	/Users/gildarov/toys/parca/vendor/google.golang.org/grpc/internal/transport/controlbuf.go:418
+#	0x1009b76cb	google.golang.org/grpc/internal/transport.(*loopyWriter).run+0x7b	/Users/gildarov/toys/parca/vendor/google.golang.org/grpc/internal/transport/controlbuf.go:551
+#	0x1009c004f	google.golang.org/grpc/internal/transport.newHTTP2Client.func6+0x6f	/Users/gildarov/toys/parca/vendor/google.golang.org/grpc/internal/transport/http2_client.go:454
+
+5 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x10067ebd0 0x10067ebbd 0x10067ebd1 0x100691de0 0x1006919e4 0x1006875a4 0x100695530 0x100695400 0x100695401 0x10067464c 0x1006740d0 0x1006739a0 0x10067358c 0x1012c0c78 0x1012c0acc 0x1007891dc 0x10078bc0c 0x10078a9dc 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f				/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27				/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x10067ebcf	internal/poll.(*pollDesc).waitWrite+0x55f			/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:93
+#	0x10067ebbc	internal/poll.(*FD).WaitWrite+0x54c				/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:683
+#	0x10067ebd0	net.(*netFD).connect+0x560					/Users/gildarov/.gvm/gos/go1.22/src/net/fd_unix.go:141
+#	0x100691ddf	net.(*netFD).dial+0x2ff						/Users/gildarov/.gvm/gos/go1.22/src/net/sock_posix.go:124
+#	0x1006919e3	net.socket+0x213						/Users/gildarov/.gvm/gos/go1.22/src/net/sock_posix.go:70
+#	0x1006875a3	net.internetSocket+0xa3						/Users/gildarov/.gvm/gos/go1.22/src/net/ipsock_posix.go:154
+#	0x10069552f	net.(*sysDialer).doDialTCPProto+0xaf				/Users/gildarov/.gvm/gos/go1.22/src/net/tcpsock_posix.go:85
+#	0x1006953ff	net.(*sysDialer).doDialTCP+0x6f					/Users/gildarov/.gvm/gos/go1.22/src/net/tcpsock_posix.go:75
+#	0x100695400	net.(*sysDialer).dialTCP+0x70					/Users/gildarov/.gvm/gos/go1.22/src/net/tcpsock_posix.go:71
+#	0x10067464b	net.(*sysDialer).dialSingle+0x1eb				/Users/gildarov/.gvm/gos/go1.22/src/net/dial.go:651
+#	0x1006740cf	net.(*sysDialer).dialSerial+0x19f				/Users/gildarov/.gvm/gos/go1.22/src/net/dial.go:616
+#	0x10067399f	net.(*sysDialer).dialParallel+0x29f				/Users/gildarov/.gvm/gos/go1.22/src/net/dial.go:517
+#	0x10067358b	net.(*Dialer).DialContext+0x53b					/Users/gildarov/.gvm/gos/go1.22/src/net/dial.go:508
+#	0x1012c0c77	github.com/mwitkow/go-conntrack.dialClientConnTracker+0x157	/Users/gildarov/toys/parca/vendor/github.com/mwitkow/go-conntrack/dialer_wrapper.go:123
+#	0x1012c0acb	github.com/mwitkow/go-conntrack.NewDialContextFunc.func1+0xdb	/Users/gildarov/toys/parca/vendor/github.com/mwitkow/go-conntrack/dialer_wrapper.go:94
+#	0x1007891db	net/http.(*Transport).dial+0xdb					/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:1187
+#	0x10078bc0b	net/http.(*Transport).dialConn+0x61b				/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:1647
+#	0x10078a9db	net/http.(*Transport).dialConnFor+0x8b				/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:1484
+
+5 @ 0x1003abca8 0x1003bf1e8 0x10067ef60 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x10067ef5f	net.(*netFD).connect.func2+0x6f	/Users/gildarov/.gvm/gos/go1.22/src/net/fd_unix.go:118
+
+5 @ 0x1003abca8 0x1003bf1e8 0x100789f64 0x100785e68 0x10076b22c 0x10072906c 0x100728a5c 0x10072a884 0x103328928 0x10332889d 0x10332d9b0 0x10332e5a8 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x100789f63	net/http.(*Transport).getConn+0x433					/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:1406
+#	0x100785e67	net/http.(*Transport).roundTrip+0x647					/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:595
+#	0x10076b22b	net/http.(*Transport).RoundTrip+0x1b					/Users/gildarov/.gvm/gos/go1.22/src/net/http/roundtrip.go:17
+#	0x10072906b	net/http.send+0x4ab							/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:259
+#	0x100728a5b	net/http.(*Client).send+0x9b						/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:180
+#	0x10072a883	net/http.(*Client).do+0x6b3						/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:724
+#	0x103328927	net/http.(*Client).Do+0xc7						/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:590
+#	0x10332889c	golang.org/x/net/context/ctxhttp.Do+0x3c				/Users/gildarov/toys/parca/vendor/golang.org/x/net/context/ctxhttp/ctxhttp.go:27
+#	0x10332d9af	github.com/parca-dev/parca/pkg/scrape.(*targetScraper).scrape+0x2af	/Users/gildarov/toys/parca/pkg/scrape/scrape.go:331
+#	0x10332e5a7	github.com/parca-dev/parca/pkg/scrape.(*scrapeLoop).run+0x3b7		/Users/gildarov/toys/parca/pkg/scrape/scrape.go:466
+
+4 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x10045f6c0 0x10045f6b1 0x10067d5e8 0x10068cbf4 0x103374be4 0x100454660 0x10097f748 0x10097f71d 0x10097fe38 0x100989fe0 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f			/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27			/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x10045f6bf	internal/poll.(*pollDesc).waitRead+0x1ff		/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:89
+#	0x10045f6b0	internal/poll.(*FD).Read+0x1f0				/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:164
+#	0x10067d5e7	net.(*netFD).Read+0x27					/Users/gildarov/.gvm/gos/go1.22/src/net/fd_posix.go:55
+#	0x10068cbf3	net.(*conn).Read+0x33					/Users/gildarov/.gvm/gos/go1.22/src/net/net.go:179
+#	0x103374be3	golang.org/x/net/http2/h2c.(*bufConn).Read+0xb3		/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/h2c/h2c.go:229
+#	0x10045465f	io.ReadAtLeast+0x9f					/Users/gildarov/.gvm/gos/go1.22/src/io/io.go:335
+#	0x10097f747	io.ReadFull+0x57					/Users/gildarov/.gvm/gos/go1.22/src/io/io.go:354
+#	0x10097f71c	golang.org/x/net/http2.readFrameHeader+0x2c		/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/frame.go:237
+#	0x10097fe37	golang.org/x/net/http2.(*Framer).ReadFrame+0x77		/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/frame.go:498
+#	0x100989fdf	golang.org/x/net/http2.(*serverConn).readFrames+0x7f	/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/server.go:820
+
+4 @ 0x1003abca8 0x1003bf1e8 0x10090d960 0x1003e5e14
+#	0x10090d95f	github.com/dgraph-io/badger/v4.(*levelsController).runCompactor+0x22f	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/levels.go:508
+
+3 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x10045f6c0 0x10045f6b1 0x10067d5e8 0x10068cbf4 0x10078da30 0x100505fd8 0x100506140 0x10078e9b8 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f		/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27		/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x10045f6bf	internal/poll.(*pollDesc).waitRead+0x1ff	/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:89
+#	0x10045f6b0	internal/poll.(*FD).Read+0x1f0			/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:164
+#	0x10067d5e7	net.(*netFD).Read+0x27				/Users/gildarov/.gvm/gos/go1.22/src/net/fd_posix.go:55
+#	0x10068cbf3	net.(*conn).Read+0x33				/Users/gildarov/.gvm/gos/go1.22/src/net/net.go:179
+#	0x10078da2f	net/http.(*persistConn).Read+0x4f		/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:1976
+#	0x100505fd7	bufio.(*Reader).fill+0xf7			/Users/gildarov/.gvm/gos/go1.22/src/bufio/bufio.go:110
+#	0x10050613f	bufio.(*Reader).Peek+0x5f			/Users/gildarov/.gvm/gos/go1.22/src/bufio/bufio.go:148
+#	0x10078e9b7	net/http.(*persistConn).readLoop+0x157		/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:2140
+
+3 @ 0x1003abca8 0x1003bf1e8 0x100790260 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x10079025f	net/http.(*persistConn).writeLoop+0x9f	/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:2443
+
+3 @ 0x1003abca8 0x1003bf1e8 0x100951ca8 0x1003e5e14
+#	0x100951ca7	google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run+0xc7	/Users/gildarov/toys/parca/vendor/google.golang.org/grpc/internal/grpcsync/callback_serializer.go:76
+
+2 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x10045f6c0 0x10045f6b1 0x10067d5e8 0x10068cbf4 0x100454660 0x10097f748 0x10097f71d 0x10097fe38 0x100989fe0 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f			/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27			/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x10045f6bf	internal/poll.(*pollDesc).waitRead+0x1ff		/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:89
+#	0x10045f6b0	internal/poll.(*FD).Read+0x1f0				/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:164
+#	0x10067d5e7	net.(*netFD).Read+0x27					/Users/gildarov/.gvm/gos/go1.22/src/net/fd_posix.go:55
+#	0x10068cbf3	net.(*conn).Read+0x33					/Users/gildarov/.gvm/gos/go1.22/src/net/net.go:179
+#	0x10045465f	io.ReadAtLeast+0x9f					/Users/gildarov/.gvm/gos/go1.22/src/io/io.go:335
+#	0x10097f747	io.ReadFull+0x57					/Users/gildarov/.gvm/gos/go1.22/src/io/io.go:354
+#	0x10097f71c	golang.org/x/net/http2.readFrameHeader+0x2c		/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/frame.go:237
+#	0x10097fe37	golang.org/x/net/http2.(*Framer).ReadFrame+0x77		/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/frame.go:498
+#	0x100989fdf	golang.org/x/net/http2.(*serverConn).readFrames+0x7f	/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/server.go:820
+
+2 @ 0x1003abca8 0x1003bf1e8 0x1008c7090 0x1003e5e14
+#	0x1008c708f	github.com/dgraph-io/badger/v4/y.(*WaterMark).process+0x1bf	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/y/watermark.go:214
+
+1 @ 0x1003a163c 0x1003dee84 0x1007d1ab4 0x1007d18d0 0x1007ced18 0x10334d504 0x10334de44 0x100776058 0x103353aa8 0x100776058 0x1033518b4 0x103353100 0x100776058 0x103353aa8 0x100776058 0x103351870 0x103380608 0x100776058 0x10338302c 0x100776058 0x103373e80 0x103382f6c 0x100776058 0x10077946c 0x100774c28 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1003dee83	runtime/pprof.runtime_goroutineProfileWithLabels+0x23						/Users/gildarov/.gvm/gos/go1.22/src/runtime/mprof.go:1079
+#	0x1007d1ab3	runtime/pprof.writeRuntimeProfile+0xb3								/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/pprof.go:774
+#	0x1007d18cf	runtime/pprof.writeGoroutine+0x4f								/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/pprof.go:734
+#	0x1007ced17	runtime/pprof.(*Profile).WriteTo+0x147								/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/pprof.go:369
+#	0x10334d503	net/http/pprof.handler.ServeHTTP+0x443								/Users/gildarov/.gvm/gos/go1.22/src/net/http/pprof/pprof.go:267
+#	0x10334de43	net/http/pprof.Index+0xc3									/Users/gildarov/.gvm/gos/go1.22/src/net/http/pprof/pprof.go:384
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x103353aa7	github.com/go-chi/chi/v5.(*Mux).routeHTTP+0x287							/Users/gildarov/toys/parca/vendor/github.com/go-chi/chi/v5/mux.go:459
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x1033518b3	github.com/go-chi/chi/v5.(*Mux).ServeHTTP+0x2c3							/Users/gildarov/toys/parca/vendor/github.com/go-chi/chi/v5/mux.go:73
+#	0x1033530ff	github.com/go-chi/chi/v5.(*Mux).Mount.func1+0x1df						/Users/gildarov/toys/parca/vendor/github.com/go-chi/chi/v5/mux.go:327
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x103353aa7	github.com/go-chi/chi/v5.(*Mux).routeHTTP+0x287							/Users/gildarov/toys/parca/vendor/github.com/go-chi/chi/v5/mux.go:459
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x10335186f	github.com/go-chi/chi/v5.(*Mux).ServeHTTP+0x27f							/Users/gildarov/toys/parca/vendor/github.com/go-chi/chi/v5/mux.go:90
+#	0x103380607	github.com/parca-dev/parca/pkg/server.(*Server).ListenAndServe.fallbackNotFound.func14+0xa7	/Users/gildarov/toys/parca/pkg/server/fallback.go:54
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x10338302b	github.com/parca-dev/parca/pkg/server.grpcHandlerFunc.func3+0x8b				/Users/gildarov/toys/parca/pkg/server/server.go:297
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x103373e7f	golang.org/x/net/http2/h2c.h2cHandler.ServeHTTP+0x4bf						/Users/gildarov/toys/parca/vendor/golang.org/x/net/http2/h2c/h2c.go:125
+#	0x103382f6b	github.com/parca-dev/parca/pkg/server.grpcHandlerFunc.(*Cors).Handler.func7+0x19b		/Users/gildarov/toys/parca/vendor/github.com/go-chi/cors/cors.go:228
+#	0x100776057	net/http.HandlerFunc.ServeHTTP+0x37								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2166
+#	0x10077946b	net/http.serverHandler.ServeHTTP+0xbb								/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:3137
+#	0x100774c27	net/http.(*conn).serve+0x507									/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:2039
+
+1 @ 0x1003a6640 0x1003e17bc 0x100a2d77c 0x1003e5e14
+#	0x1003e17bb	os/signal.signal_recv+0x2b	/Users/gildarov/.gvm/gos/go1.22/src/runtime/sigqueue.go:149
+#	0x100a2d77b	os/signal.loop+0x1b		/Users/gildarov/.gvm/gos/go1.22/src/os/signal/signal_unix.go:23
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x100a2dca0 0x10341acbc 0x103421964 0x1003ab84c 0x1003e5e14
+#	0x100a2dc9f	github.com/oklog/run.(*Group).Run+0x13f		/Users/gildarov/toys/parca/vendor/github.com/oklog/run/group.go:43
+#	0x10341acbb	github.com/parca-dev/parca/pkg/parca.Run+0x3d3b	/Users/gildarov/toys/parca/pkg/parca/parca.go:652
+#	0x103421963	main.main+0x593					/Users/gildarov/toys/parca/cmd/parca/main.go:64
+#	0x1003ab84b	runtime.main+0x28b				/Users/gildarov/.gvm/gos/go1.22/src/runtime/proc.go:271
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x1012fb848 0x10341c518 0x1007da200 0x10341c4c0 0x100a2de04 0x1003e5e14
+# labels: {"parca_component":"discovery"}
+#	0x1012fb847	github.com/prometheus/prometheus/discovery.(*Manager).Run+0x77	/Users/gildarov/toys/parca/vendor/github.com/prometheus/prometheus/discovery/manager.go:183
+#	0x10341c517	github.com/parca-dev/parca/pkg/parca.Run.func7.1+0x27		/Users/gildarov/toys/parca/pkg/parca/parca.go:539
+#	0x1007da1ff	runtime/pprof.Do+0x7f						/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/runtime.go:51
+#	0x10341c4bf	github.com/parca-dev/parca/pkg/parca.Run.func7+0x19f		/Users/gildarov/toys/parca/pkg/parca/parca.go:538
+#	0x100a2de03	github.com/oklog/run.(*Group).Run.func1+0x33			/Users/gildarov/toys/parca/vendor/github.com/oklog/run/group.go:38
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x1012fcbe8 0x1003e5e14
+#	0x1012fcbe7	github.com/prometheus/prometheus/discovery.(*Manager).updater+0x327	/Users/gildarov/toys/parca/vendor/github.com/prometheus/prometheus/discovery/manager.go:323
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x10193c838 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x10193c837	github.com/parca-dev/parca/gen/proto/go/parca/debuginfo/v1alpha1.RegisterDebuginfoServiceHandlerFromEndpoint.func1.1+0x47	/Users/gildarov/toys/parca/gen/proto/go/parca/debuginfo/v1alpha1/debuginfo.pb.gw.go:262
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x101971458 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x101971457	github.com/parca-dev/parca/gen/proto/go/parca/profilestore/v1alpha1.RegisterProfileStoreServiceHandlerFromEndpoint.func1.1+0x47	/Users/gildarov/toys/parca/gen/proto/go/parca/profilestore/v1alpha1/profilestore.pb.gw.go:161
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x101971d48 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x101971d47	github.com/parca-dev/parca/gen/proto/go/parca/profilestore/v1alpha1.RegisterAgentsServiceHandlerFromEndpoint.func1.1+0x47	/Users/gildarov/toys/parca/gen/proto/go/parca/profilestore/v1alpha1/profilestore.pb.gw.go:232
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x101988fe8 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x101988fe7	github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1.RegisterQueryServiceHandlerFromEndpoint.func1.1+0x47	/Users/gildarov/toys/parca/gen/proto/go/parca/query/v1alpha1/query.pb.gw.go:491
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x1019c1218 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1019c1217	github.com/parca-dev/parca/gen/proto/go/parca/scrape/v1alpha1.RegisterScrapeServiceHandlerFromEndpoint.func1.1+0x47	/Users/gildarov/toys/parca/gen/proto/go/parca/scrape/v1alpha1/scrape.pb.gw.go:119
+
+1 @ 0x1003abca8 0x1003759a4 0x100375564 0x1019d1de8 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1019d1de7	github.com/parca-dev/parca/gen/proto/go/parca/telemetry/v1alpha1.RegisterTelemetryServiceHandlerFromEndpoint.func1.1+0x47	/Users/gildarov/toys/parca/gen/proto/go/parca/telemetry/v1alpha1/telemetry.pb.gw.go:109
+
+1 @ 0x1003abca8 0x1003759a4 0x100375584 0x1008fa8ac 0x1008f66f8 0x1003e5e14
+#	0x1008fa8ab	github.com/dgraph-io/badger/v4.(*DB).flushMemtable+0x6b	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/db.go:1110
+#	0x1008f66f7	github.com/dgraph-io/badger/v4.Open.func5+0x27		/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/db.go:359
+
+1 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x10045f6c0 0x10045f6b1 0x10067d5e8 0x10068cbf4 0x10076f250 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f		/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27		/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x10045f6bf	internal/poll.(*pollDesc).waitRead+0x1ff	/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:89
+#	0x10045f6b0	internal/poll.(*FD).Read+0x1f0			/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:164
+#	0x10067d5e7	net.(*netFD).Read+0x27				/Users/gildarov/.gvm/gos/go1.22/src/net/fd_posix.go:55
+#	0x10068cbf3	net.(*conn).Read+0x33				/Users/gildarov/.gvm/gos/go1.22/src/net/net.go:179
+#	0x10076f24f	net/http.(*connReader).backgroundRead+0x3f	/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:681
+
+1 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x10045f6c0 0x10045f6b1 0x10067d5e8 0x10068cbf4 0x10076f884 0x100505fd8 0x100506be0 0x100506e14 0x100706680 0x1007681c8 0x1007681e1 0x100770b8c 0x1007749e4 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f		/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27		/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x10045f6bf	internal/poll.(*pollDesc).waitRead+0x1ff	/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:89
+#	0x10045f6b0	internal/poll.(*FD).Read+0x1f0			/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:164
+#	0x10067d5e7	net.(*netFD).Read+0x27				/Users/gildarov/.gvm/gos/go1.22/src/net/fd_posix.go:55
+#	0x10068cbf3	net.(*conn).Read+0x33				/Users/gildarov/.gvm/gos/go1.22/src/net/net.go:179
+#	0x10076f883	net/http.(*connReader).Read+0x223		/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:789
+#	0x100505fd7	bufio.(*Reader).fill+0xf7			/Users/gildarov/.gvm/gos/go1.22/src/bufio/bufio.go:110
+#	0x100506bdf	bufio.(*Reader).ReadSlice+0x2f			/Users/gildarov/.gvm/gos/go1.22/src/bufio/bufio.go:376
+#	0x100506e13	bufio.(*Reader).ReadLine+0x23			/Users/gildarov/.gvm/gos/go1.22/src/bufio/bufio.go:405
+#	0x10070667f	net/textproto.(*Reader).readLineSlice+0x7f	/Users/gildarov/.gvm/gos/go1.22/src/net/textproto/reader.go:56
+#	0x1007681c7	net/textproto.(*Reader).ReadLine+0x77		/Users/gildarov/.gvm/gos/go1.22/src/net/textproto/reader.go:39
+#	0x1007681e0	net/http.readRequest+0x90			/Users/gildarov/.gvm/gos/go1.22/src/net/http/request.go:1059
+#	0x100770b8b	net/http.(*conn).readRequest+0x1fb		/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:1004
+#	0x1007749e3	net/http.(*conn).serve+0x2c3			/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:1964
+
+1 @ 0x1003abca8 0x1003a5578 0x1003df320 0x10045e378 0x100462e00 0x100462df1 0x10067f1c8 0x100695958 0x100694bcc 0x100779818 0x100779534 0x1033804a8 0x10341b874 0x1007da200 0x10341b6c8 0x100a2de04 0x1003e5e14
+# labels: {"parca_component":"http_server"}
+#	0x1003df31f	internal/poll.runtime_pollWait+0x9f					/Users/gildarov/.gvm/gos/go1.22/src/runtime/netpoll.go:345
+#	0x10045e377	internal/poll.(*pollDesc).wait+0x27					/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:84
+#	0x100462dff	internal/poll.(*pollDesc).waitRead+0x24f				/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_poll_runtime.go:89
+#	0x100462df0	internal/poll.(*FD).Accept+0x240					/Users/gildarov/.gvm/gos/go1.22/src/internal/poll/fd_unix.go:611
+#	0x10067f1c7	net.(*netFD).accept+0x27						/Users/gildarov/.gvm/gos/go1.22/src/net/fd_unix.go:172
+#	0x100695957	net.(*TCPListener).accept+0x27						/Users/gildarov/.gvm/gos/go1.22/src/net/tcpsock_posix.go:159
+#	0x100694bcb	net.(*TCPListener).Accept+0x2b						/Users/gildarov/.gvm/gos/go1.22/src/net/tcpsock.go:327
+#	0x100779817	net/http.(*Server).Serve+0x2a7						/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:3255
+#	0x100779533	net/http.(*Server).ListenAndServe+0x83					/Users/gildarov/.gvm/gos/go1.22/src/net/http/server.go:3184
+#	0x1033804a7	github.com/parca-dev/parca/pkg/server.(*Server).ListenAndServe+0xd27	/Users/gildarov/toys/parca/pkg/server/server.go:175
+#	0x10341b873	github.com/parca-dev/parca/pkg/parca.Run.func13.1+0x173			/Users/gildarov/toys/parca/pkg/parca/parca.go:585
+#	0x1007da1ff	runtime/pprof.Do+0x7f							/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/runtime.go:51
+#	0x10341b6c7	github.com/parca-dev/parca/pkg/parca.Run.func13+0x257			/Users/gildarov/toys/parca/pkg/parca/parca.go:584
+#	0x100a2de03	github.com/oklog/run.(*Group).Run.func1+0x33				/Users/gildarov/toys/parca/vendor/github.com/oklog/run/group.go:38
+
+1 @ 0x1003abca8 0x1003bf1e8 0x100791028 0x100785eac 0x10076b22c 0x10072906c 0x100728a5c 0x10072a884 0x103328928 0x10332889d 0x10332d9b0 0x10332e5a8 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x100791027	net/http.(*persistConn).roundTrip+0x7c7					/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:2674
+#	0x100785eab	net/http.(*Transport).roundTrip+0x68b					/Users/gildarov/.gvm/gos/go1.22/src/net/http/transport.go:608
+#	0x10076b22b	net/http.(*Transport).RoundTrip+0x1b					/Users/gildarov/.gvm/gos/go1.22/src/net/http/roundtrip.go:17
+#	0x10072906b	net/http.send+0x4ab							/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:259
+#	0x100728a5b	net/http.(*Client).send+0x9b						/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:180
+#	0x10072a883	net/http.(*Client).do+0x6b3						/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:724
+#	0x103328927	net/http.(*Client).Do+0xc7						/Users/gildarov/.gvm/gos/go1.22/src/net/http/client.go:590
+#	0x10332889c	golang.org/x/net/context/ctxhttp.Do+0x3c				/Users/gildarov/toys/parca/vendor/golang.org/x/net/context/ctxhttp/ctxhttp.go:27
+#	0x10332d9af	github.com/parca-dev/parca/pkg/scrape.(*targetScraper).scrape+0x2af	/Users/gildarov/toys/parca/pkg/scrape/scrape.go:331
+#	0x10332e5a7	github.com/parca-dev/parca/pkg/scrape.(*scrapeLoop).run+0x3b7		/Users/gildarov/toys/parca/pkg/scrape/scrape.go:466
+
+1 @ 0x1003abca8 0x1003bf1e8 0x100884d38 0x1003e5e14
+#	0x100884d37	github.com/golang/glog.(*fileSink).flushDaemon+0xa7	/Users/gildarov/toys/parca/vendor/github.com/golang/glog/glog_file.go:351
+
+1 @ 0x1003abca8 0x1003bf1e8 0x10088960c 0x1003e5e14
+#	0x10088960b	github.com/dgraph-io/ristretto/z.(*AllocatorPool).freeupAllocators+0xfb	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/ristretto/z/allocator.go:385
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1008d2ddc 0x1003e5e14
+#	0x1008d2ddb	github.com/dgraph-io/ristretto.(*Cache).processItems+0xfb	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/ristretto/cache.go:452
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1008d4794 0x1003e5e14
+#	0x1008d4793	github.com/dgraph-io/ristretto.(*defaultPolicy).processItems+0x63	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/ristretto/policy.go:102
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1008f6f2c 0x1003e5e14
+#	0x1008f6f2b	github.com/dgraph-io/badger/v4.(*DB).monitorCache+0x13b	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/db.go:471
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1008f963c 0x1003e5e14
+#	0x1008f963b	github.com/dgraph-io/badger/v4.(*DB).doWrites+0x1cb	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/db.go:938
+
+1 @ 0x1003abca8 0x1003bf1e8 0x100920810 0x1003e5e14
+#	0x10092080f	github.com/dgraph-io/badger/v4.(*publisher).listenForUpdates+0xdf	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/publisher.go:73
+
+1 @ 0x1003abca8 0x1003bf1e8 0x100933230 0x1003e5e14
+#	0x10093322f	github.com/dgraph-io/badger/v4.(*vlogThreshold).listenForValueThresholdUpdate+0xcf	/Users/gildarov/toys/parca/vendor/github.com/dgraph-io/badger/v4/value.go:1176
+
+1 @ 0x1003abca8 0x1003bf1e8 0x100a2da74 0x100a2de04 0x1003e5e14
+#	0x100a2da73	github.com/oklog/run.SignalHandler.func1+0xb3	/Users/gildarov/toys/parca/vendor/github.com/oklog/run/actors.go:18
+#	0x100a2de03	github.com/oklog/run.(*Group).Run.func1+0x33	/Users/gildarov/toys/parca/vendor/github.com/oklog/run/group.go:38
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1012bb618 0x1003e5e14
+#	0x1012bb617	github.com/polarsignals/frostdb.(*TxPool).cleaner+0x97	/Users/gildarov/toys/parca/vendor/github.com/polarsignals/frostdb/tx_list.go:198
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1012fcdc4 0x1003e5e14
+# labels: {"parca_component":"discovery"}
+#	0x1012fcdc3	github.com/prometheus/prometheus/discovery.(*Manager).sender+0xa3	/Users/gildarov/toys/parca/vendor/github.com/prometheus/prometheus/discovery/manager.go:346
+
+1 @ 0x1003abca8 0x1003bf1e8 0x10141fb8c 0x1003e5e14
+#	0x10141fb8b	github.com/baidubce/bce-sdk-go/util/log.NewLogger.func1+0x8b	/Users/gildarov/toys/parca/vendor/github.com/baidubce/bce-sdk-go/util/log/logger.go:375
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1015575c8 0x1003e5e14
+#	0x1015575c7	go.opencensus.io/stats/view.(*worker).start+0x87	/Users/gildarov/toys/parca/vendor/go.opencensus.io/stats/view/worker.go:292
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1031daad4 0x1003e5e14
+# labels: {"parca_component":"config_reloader"}
+#	0x1031daad3	github.com/parca-dev/parca/pkg/config.(*ConfigReloader).watchFile+0x83	/Users/gildarov/toys/parca/pkg/config/reloader.go:95
+
+1 @ 0x1003abca8 0x1003bf1e8 0x1031dbb44 0x10341be9c 0x1007da200 0x10341be2c 0x100a2de04 0x1003e5e14
+# labels: {"parca_component":"config_reloader"}
+#	0x1031dbb43	github.com/parca-dev/parca/pkg/config.(*ConfigReloader).Run+0xb3	/Users/gildarov/toys/parca/pkg/config/reloader.go:174
+#	0x10341be9b	github.com/parca-dev/parca/pkg/parca.Run.func11.1+0x3b			/Users/gildarov/toys/parca/pkg/parca/parca.go:569
+#	0x1007da1ff	runtime/pprof.Do+0x7f							/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/runtime.go:51
+#	0x10341be2b	github.com/parca-dev/parca/pkg/parca.Run.func11+0x19b			/Users/gildarov/toys/parca/pkg/parca/parca.go:568
+#	0x100a2de03	github.com/oklog/run.(*Group).Run.func1+0x33				/Users/gildarov/toys/parca/vendor/github.com/oklog/run/group.go:38
+
+1 @ 0x1003abca8 0x1003bf1e8 0x103329b14 0x10341c1f0 0x1007da200 0x10341c190 0x100a2de04 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x103329b13	github.com/parca-dev/parca/pkg/scrape.(*Manager).Run+0xc3	/Users/gildarov/toys/parca/pkg/scrape/manager.go:151
+#	0x10341c1ef	github.com/parca-dev/parca/pkg/parca.Run.func9.1+0x2f		/Users/gildarov/toys/parca/pkg/parca/parca.go:554
+#	0x1007da1ff	runtime/pprof.Do+0x7f						/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/runtime.go:51
+#	0x10341c18f	github.com/parca-dev/parca/pkg/parca.Run.func9+0x1af		/Users/gildarov/toys/parca/pkg/parca/parca.go:553
+#	0x100a2de03	github.com/oklog/run.(*Group).Run.func1+0x33			/Users/gildarov/toys/parca/vendor/github.com/oklog/run/group.go:38
+
+1 @ 0x1003abca8 0x1003bf1e8 0x103329c94 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x103329c93	github.com/parca-dev/parca/pkg/scrape.(*Manager).reloader+0xe3	/Users/gildarov/toys/parca/pkg/scrape/manager.go:175
+
+1 @ 0x1003abca8 0x1003bf1e8 0x10335f214 0x1003e5e14
+#	0x10335f213	github.com/desertbit/timer.timerRoutine+0xa3	/Users/gildarov/toys/parca/vendor/github.com/desertbit/timer/timers.go:119
+
+1 @ 0x1003abca8 0x1003bf1e8 0x103384a74 0x1033e0600 0x10341c868 0x1007da200 0x10341c7f0 0x100a2de04 0x1003e5e14
+# labels: {"parca_component":"symbolizer"}
+#	0x103384a73	github.com/parca-dev/parca/pkg/runutil.Repeat+0xa3			/Users/gildarov/toys/parca/pkg/runutil/runutil.go:41
+#	0x1033e05ff	github.com/parca-dev/parca/pkg/symbolizer.(*Symbolizer).Run+0x6f	/Users/gildarov/toys/parca/pkg/symbolizer/symbolizer.go:188
+#	0x10341c867	github.com/parca-dev/parca/pkg/parca.Run.func5.1+0x47			/Users/gildarov/toys/parca/pkg/parca/parca.go:524
+#	0x1007da1ff	runtime/pprof.Do+0x7f							/Users/gildarov/.gvm/gos/go1.22/src/runtime/pprof/runtime.go:51
+#	0x10341c7ef	github.com/parca-dev/parca/pkg/parca.Run.func5+0x19f			/Users/gildarov/toys/parca/pkg/parca/parca.go:523
+#	0x100a2de03	github.com/oklog/run.(*Group).Run.func1+0x33				/Users/gildarov/toys/parca/vendor/github.com/oklog/run/group.go:38
+
+1 @ 0x1003e2168 0x1007a2464 0x1007a12c0 0x1020c3ed4 0x1020c2b9c 0x1003e5e14
+#	0x1003e2167	syscall.syscall6+0x67					/Users/gildarov/.gvm/gos/go1.22/src/runtime/sys_darwin.go:45
+#	0x1007a2463	golang.org/x/sys/unix.kevent+0x53			/Users/gildarov/toys/parca/vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:275
+#	0x1007a12bf	golang.org/x/sys/unix.Kevent+0x3f			/Users/gildarov/toys/parca/vendor/golang.org/x/sys/unix/syscall_bsd.go:397
+#	0x1020c3ed3	github.com/fsnotify/fsnotify.(*Watcher).read+0x43	/Users/gildarov/toys/parca/vendor/github.com/fsnotify/fsnotify/backend_kqueue.go:777
+#	0x1020c2b9b	github.com/fsnotify/fsnotify.(*Watcher).readEvents+0x9b	/Users/gildarov/toys/parca/vendor/github.com/fsnotify/fsnotify/backend_kqueue.go:547
+
+1 @ 0x10062e710 0x10062e8a0 0x103200b18 0x1031fe5b0 0x1031fe561 0x1031ff800 0x10327ed4c 0x10327c3a0 0x10327f7cc 0x1032e6060 0x1032e6588 0x10332f440 0x1003e5e14
+# labels: {"parca_component":"scraper"}
+#	0x10062e70f	crypto/sha512.(*digest).checkSum+0x19f								/Users/gildarov/.gvm/gos/go1.22/src/crypto/sha512/sha512.go:302
+#	0x10062e89f	crypto/sha512.Sum512_256+0x7f									/Users/gildarov/.gvm/gos/go1.22/src/crypto/sha512/sha512.go:381
+#	0x103200b17	github.com/parca-dev/parca/pkg/metastore.(*KeyMaker).MakeStacktraceID+0x137			/Users/gildarov/toys/parca/pkg/metastore/kv.go:236
+#	0x1031fe5af	github.com/parca-dev/parca/pkg/metastore.(*KeyMaker).MakeStacktraceKey+0x10f			/Users/gildarov/toys/parca/pkg/metastore/kv.go:218
+#	0x1031fe560	github.com/parca-dev/parca/pkg/metastore.(*BadgerMetastore).GetOrCreateStacktraces+0xc0		/Users/gildarov/toys/parca/pkg/metastore/badger.go:445
+#	0x1031ff7ff	github.com/parca-dev/parca/pkg/metastore.(*InProcessClient).GetOrCreateStacktraces+0x2f		/Users/gildarov/toys/parca/pkg/metastore/inprocess.go:45
+#	0x10327ed4b	github.com/parca-dev/parca/pkg/normalizer.(*MetastoreNormalizer).NormalizeStacktraces+0x20b	/Users/gildarov/toys/parca/pkg/normalizer/normalizer.go:535
+#	0x10327c39f	github.com/parca-dev/parca/pkg/normalizer.(*MetastoreNormalizer).NormalizePprof+0x28f		/Users/gildarov/toys/parca/pkg/normalizer/normalizer.go:131
+#	0x10327f7cb	github.com/parca-dev/parca/pkg/normalizer.(*MetastoreNormalizer).NormalizeWriteRawRequest+0x91b	/Users/gildarov/toys/parca/pkg/normalizer/normalizer.go:611
+#	0x1032e605f	github.com/parca-dev/parca/pkg/profilestore.(*ProfileColumnStore).writeSeries+0x3f		/Users/gildarov/toys/parca/pkg/profilestore/profilecolumnstore.go:82
+#	0x1032e6587	github.com/parca-dev/parca/pkg/profilestore.(*ProfileColumnStore).WriteRaw+0xc7			/Users/gildarov/toys/parca/pkg/profilestore/profilecolumnstore.go:127
+#	0x10332f43f	github.com/parca-dev/parca/pkg/scrape.(*scrapeLoop).run+0x124f					/Users/gildarov/toys/parca/pkg/scrape/scrape.go:548

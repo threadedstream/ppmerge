@@ -6,6 +6,11 @@ package dummyprofile;
 option go_package = "github.com/threadedstream/ppmerge";
 
 
+// MergedByteProfile may represent merged profiles downloaded with debug option
+message MergedByteProfile {
+  repeated bytes profiles = 1;
+}
+
 // MergedProfile represents several profiles in a single profile
 message MergedProfile {
   repeated int64 sample_type = 1;
