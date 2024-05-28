@@ -11,7 +11,7 @@ import (
 )
 
 func TestHeapMerge(t *testing.T) {
-	profiles := getProfiles(t, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(t, "hprof1", "hprof2", "hprof3", "hprof4")
 	profileMerger := NewProfileMerger()
 
 	// merge profiles
@@ -21,7 +21,7 @@ func TestHeapMerge(t *testing.T) {
 	type testCase struct {
 		name                string
 		recoveredProfileIdx uint64
-		actualProfile       *profile.Profile
+		actualProfile       *Profile
 	}
 
 	for _, tc := range []testCase{
@@ -53,26 +53,31 @@ func TestHeapMerge(t *testing.T) {
 			recoveredOne, err := unpacker.Unpack(tc.recoveredProfileIdx)
 			require.NoError(t, err)
 
+			actualProfileStringTable := tc.actualProfile.StringTable
+
 			for i, sample := range tc.actualProfile.Sample {
-				currentRecoveredSample := recoveredOne.Sample[i]
-				require.Equal(t, currentRecoveredSample.Value, sample.Value)
-				for locIdx, loc := range sample.Location {
-					for lineIdx, line := range loc.Line {
-						require.Equal(t, currentRecoveredSample.Location[locIdx].Line[lineIdx].Line, line.Line)
-						require.Equal(t, currentRecoveredSample.Location[locIdx].Line[lineIdx].Function.StartLine, line.Function.StartLine)
-						require.Equal(t, currentRecoveredSample.Location[locIdx].Line[lineIdx].Function.Name, line.Function.Name)
-						require.Equal(t, currentRecoveredSample.Location[locIdx].Line[lineIdx].Function.SystemName, line.Function.SystemName)
-						require.Equal(t, currentRecoveredSample.Location[locIdx].Line[lineIdx].Function.Filename, line.Function.Filename)
+				recoveredSample := recoveredOne.Sample[i]
+				require.Equal(t, recoveredSample.Value, sample.Value)
+				for locIdx, loc := range sample.LocationId {
+					actualLocation := tc.actualProfile.Location[loc-1]
+					recoveredLocation := recoveredSample.Location[locIdx]
+					for lineIdx, line := range actualLocation.Line {
+						require.Equal(t, line.Line, recoveredLocation.Line[lineIdx].Line)
+						lineFn := tc.actualProfile.Function[line.FunctionId-1]
+						require.Equal(t, lineFn.StartLine, recoveredLocation.Line[lineIdx].Function.StartLine)
+						require.Equal(t, actualProfileStringTable[lineFn.Name], recoveredLocation.Line[lineIdx].Function.Name)
+						require.Equal(t, actualProfileStringTable[lineFn.SystemName], recoveredLocation.Line[lineIdx].Function.SystemName)
+						require.Equal(t, actualProfileStringTable[lineFn.Filename], recoveredLocation.Line[lineIdx].Function.Filename)
 					}
-					require.Equal(t, currentRecoveredSample.Location[locIdx].Address, loc.Address)
+					require.Equal(t, recoveredSample.Location[locIdx].Address, actualLocation.Address)
 				}
 			}
 
 			require.Equal(t, recoveredOne.Period, tc.actualProfile.Period)
 
 			for i, st := range tc.actualProfile.SampleType {
-				require.Equal(t, recoveredOne.SampleType[i].Type, st.Type)
-				require.Equal(t, recoveredOne.SampleType[i].Unit, st.Unit)
+				require.Equal(t, actualProfileStringTable[st.Type], recoveredOne.SampleType[i].Type)
+				require.Equal(t, actualProfileStringTable[st.Unit], recoveredOne.SampleType[i].Unit)
 			}
 
 			require.Equal(t, recoveredOne.DurationNanos, tc.actualProfile.DurationNanos)
@@ -82,7 +87,7 @@ func TestHeapMerge(t *testing.T) {
 }
 
 func TestMergeWrite(t *testing.T) {
-	profiles := getProfiles(t, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(t, "hprof1", "hprof2", "hprof3", "hprof4")
 
 	profileMerger := NewProfileMerger()
 	mergedProfile := profileMerger.Merge(profiles...)
@@ -100,12 +105,14 @@ func TestMergeWrite(t *testing.T) {
 
 	noCompactBB := bytes.NewBuffer(nil)
 	for _, p := range profiles {
-		require.NoError(t, p.Write(noCompactBB))
+		b, err := p.MarshalVT()
+		require.NoError(t, err)
+		noCompactBB.Write(b)
 	}
 	require.Less(t, compressedBB.Len(), noCompactBB.Len())
 
 	// merge profiles with different sample types
-	profiles = getProfiles(t, "parca_heap", "parca_cpu", "parca_goroutine")
+	profiles = getProfilesVtProto(t, "parca_heap", "parca_cpu", "parca_goroutine")
 	mergedProfile = profileMerger.Merge(profiles...)
 	require.NotNil(t, mergedProfile)
 
@@ -114,14 +121,16 @@ func TestMergeWrite(t *testing.T) {
 
 	noCompactBB = bytes.NewBuffer(nil)
 	for _, p := range profiles {
-		require.NoError(t, p.Write(noCompactBB))
+		b, err := p.MarshalVT()
+		require.NoError(t, err)
+		noCompactBB.Write(b)
 	}
 	require.Less(t, compressedBB.Len(), noCompactBB.Len())
 }
 
 func TestMergeUnpack(t *testing.T) {
 	t.Run("general merge unpack", func(t *testing.T) {
-		profiles := getProfiles(t, "hprof1", "hprof2", "hprof3", "hprof4")
+		profiles := getProfilesVtProto(t, "hprof1", "hprof2", "hprof3", "hprof4")
 
 		profileMerger := NewProfileMerger()
 		mergedProfile := profileMerger.Merge(profiles...)
@@ -189,8 +198,23 @@ func TestMergeUnpack(t *testing.T) {
 	})
 }
 
+func BenchmarkVtProtobufParsing(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		profiles := getProfilesVtProto(b, "hprof1", "hprof2", "hprof3", "hprof4")
+		for _, p := range profiles {
+			p.ReturnToVTPool()
+		}
+	}
+}
+
+func BenchmarkProtobufParsing(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		getProfiles(b, "hprof1", "hprof2", "hprof3", "hprof4")
+	}
+}
+
 func BenchmarkProfileMerger(b *testing.B) {
-	profiles := getProfiles(b, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(b, "hprof1", "hprof2", "hprof3", "hprof4")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -200,7 +224,7 @@ func BenchmarkProfileMerger(b *testing.B) {
 }
 
 func BenchmarkProfileUnPacker(b *testing.B) {
-	profiles := getProfiles(b, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(b, "hprof1", "hprof2", "hprof3", "hprof4")
 
 	profileMerger := NewProfileMerger()
 	mergedProfile := profileMerger.Merge(profiles...)
@@ -221,6 +245,20 @@ func getProfiles(t require.TestingT, paths ...string) []*profile.Profile {
 		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
 		require.NoError(t, err)
 		prof, err := profile.Parse(file)
+		require.NoError(t, err)
+		profiles = append(profiles, prof)
+	}
+
+	return profiles
+}
+
+func getProfilesVtProto(t require.TestingT, paths ...string) []*Profile {
+	dir := "./testdata/"
+	var profiles []*Profile
+	for _, profileName := range paths {
+		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
+		require.NoError(t, err)
+		prof, err := ParseProfile(file)
 		require.NoError(t, err)
 		profiles = append(profiles, prof)
 	}

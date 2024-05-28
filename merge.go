@@ -28,6 +28,33 @@ type locationKey struct {
 	isFolded           bool
 }
 
+type locationMap struct {
+	dense  []*MergeLocation
+	sparse map[uint64]*MergeLocation
+}
+
+func makeLocationMap(n int) locationMap {
+	return locationMap{
+		dense:  make([]*MergeLocation, n),
+		sparse: map[uint64]*MergeLocation{},
+	}
+}
+
+func (lm locationMap) get(id uint64) *MergeLocation {
+	if id < uint64(len(lm.dense)) {
+		return lm.dense[int(id)]
+	}
+	return lm.sparse[id]
+}
+
+func (lm locationMap) put(id uint64, location *MergeLocation) {
+	if id < uint64(len(lm.dense)) {
+		lm.dense[int(id)] = location
+		return
+	}
+	lm.sparse[id] = location
+}
+
 // ByteProfileUnPacker is the unpacker for MergedByteProfile
 type ByteProfileUnPacker struct {
 	mergedProfile *MergedByteProfile
@@ -57,7 +84,7 @@ func (pu *ByteProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64
 		pu.mergedProfile = new(MergedByteProfile)
 	}
 
-	if err = proto.Unmarshal(rawProfile, pu.mergedProfile); err != nil {
+	if err = pu.mergedProfile.UnmarshalVT(rawProfile); err != nil {
 		return nil, err
 	}
 
@@ -68,6 +95,7 @@ func (pu *ByteProfileUnPacker) Unpack(idx uint64) ([]byte, error) {
 	return pu.mergedProfile.Profiles[idx], nil
 }
 
+// ProfileUnPacker recovers any of the profiles stored inside mergedProfile
 // ProfileUnPacker recovers any of the profiles stored inside mergedProfile
 type ProfileUnPacker struct {
 	mergedProfile *MergedProfile
@@ -266,7 +294,7 @@ func (pu *ProfileUnPacker) unpackLocation(p *profile.Profile, id uint64) *profil
 	return loc
 }
 
-func (pu *ProfileUnPacker) unpackLine(p *profile.Profile, line *Line) profile.Line {
+func (pu *ProfileUnPacker) unpackLine(p *profile.Profile, line *MergeLine) profile.Line {
 	return profile.Line{
 		Line:     line.Line,
 		Function: pu.unpackFunction(p, line.FunctionId),
@@ -277,7 +305,7 @@ func (pu *ProfileUnPacker) getString(id int) string {
 	if id < 0 || id > len(pu.mergedProfile.StringTable) {
 		return ""
 	}
-	return pu.mergedProfile.StringTable[id-1]
+	return pu.mergedProfile.StringTable[id]
 }
 
 func (pu *ProfileUnPacker) unpackFunction(p *profile.Profile, id uint64) *profile.Function {
@@ -360,7 +388,7 @@ func (bm *ByteProfileMerger) WriteCompressed(w io.Writer) error {
 }
 
 func (bm *ByteProfileMerger) WriteUncompressed(w io.Writer) error {
-	serialized, err := proto.Marshal(bm.mergedProfile)
+	serialized, err := bm.mergedProfile.MarshalVT()
 	if err != nil {
 		return err
 	}
@@ -392,7 +420,7 @@ func (pw *ProfileMerger) WriteCompressed(w io.Writer) error {
 	// Write writes the profile as a gzip-compressed marshaled protobuf.
 	zw := gzip.NewWriter(w)
 	defer zw.Close()
-	serialized, err := proto.Marshal(pw.mergedProfile)
+	serialized, err := pw.mergedProfile.MarshalVT()
 	if err != nil {
 		return err
 	}
@@ -402,7 +430,7 @@ func (pw *ProfileMerger) WriteCompressed(w io.Writer) error {
 }
 
 func (pw *ProfileMerger) WriteUncompressed(w io.Writer) error {
-	serialized, err := proto.Marshal(pw.mergedProfile)
+	serialized, err := pw.mergedProfile.MarshalVT()
 	if err != nil {
 		return err
 	}
@@ -410,7 +438,7 @@ func (pw *ProfileMerger) WriteUncompressed(w io.Writer) error {
 	return err
 }
 
-func (pw *ProfileMerger) Merge(ps ...*profile.Profile) *MergedProfile {
+func (pw *ProfileMerger) Merge(ps ...*Profile) *MergedProfile {
 	pw.mergedProfile.NumFunctions = make([]uint64, 0, len(ps))
 	pw.mergedProfile.NumLocations = make([]uint64, 0, len(ps))
 	pw.mergedProfile.NumSampleTypes = make([]uint64, 0, len(ps))
@@ -432,41 +460,42 @@ func (pw *ProfileMerger) Merge(ps ...*profile.Profile) *MergedProfile {
 	pw.mergePeriods(ps...)
 	pw.mergePeriodTypes(ps...)
 
-	pw.mergedProfile.StringTable = make([]string, len(pw.stringTable), len(pw.stringTable))
+	pw.mergedProfile.StringTable = make([]string, len(pw.stringTable)+1)
+	pw.mergedProfile.StringTable[0] = ""
 	for st, id := range pw.stringTable {
-		pw.mergedProfile.StringTable[id-1] = st
+		pw.mergedProfile.StringTable[id] = st
 	}
 
 	return pw.mergedProfile
 }
 
-func (pw *ProfileMerger) mergeSamples(ps ...*profile.Profile) {
+func (pw *ProfileMerger) mergeSamples(ps ...*Profile) {
 	// allocate samples slice beforehand
 	size := 0
 	for _, p := range ps {
 		size += len(p.Sample)
 	}
-	pw.mergedProfile.Samples = make([]*Sample, 0, size)
+	pw.mergedProfile.Samples = make([]*MergeSample, 0, size)
 
 	for _, p := range ps {
 		for _, s := range p.Sample {
-			pw.mergedProfile.Samples = append(pw.mergedProfile.Samples, pw.asMergedSample(s))
+			pw.mergedProfile.Samples = append(pw.mergedProfile.Samples, pw.asMergedSample(s, p))
 		}
 	}
 }
 
-func (pw *ProfileMerger) mergePeriodTypes(ps ...*profile.Profile) {
+func (pw *ProfileMerger) mergePeriodTypes(ps ...*Profile) {
 	pw.mergedProfile.PeriodTypes = make([]int64, 0, len(ps)*2)
 
 	for _, p := range ps {
 		pw.mergedProfile.PeriodTypes = append(pw.mergedProfile.PeriodTypes,
-			int64(pw.putString(p.PeriodType.Type)),
-			int64(pw.putString(p.PeriodType.Unit)),
+			p.PeriodType.Type,
+			p.PeriodType.Unit,
 		)
 	}
 }
 
-func (pw *ProfileMerger) mergeTimeNanos(ps ...*profile.Profile) {
+func (pw *ProfileMerger) mergeTimeNanos(ps ...*Profile) {
 	pw.mergedProfile.TimesNanos = make([]int64, 0, len(ps))
 
 	for _, p := range ps {
@@ -474,7 +503,7 @@ func (pw *ProfileMerger) mergeTimeNanos(ps ...*profile.Profile) {
 	}
 }
 
-func (pw *ProfileMerger) mergeDurationNanos(ps ...*profile.Profile) {
+func (pw *ProfileMerger) mergeDurationNanos(ps ...*Profile) {
 	pw.mergedProfile.DurationsNanos = make([]int64, 0, len(ps))
 
 	for _, p := range ps {
@@ -482,7 +511,7 @@ func (pw *ProfileMerger) mergeDurationNanos(ps ...*profile.Profile) {
 	}
 }
 
-func (pw *ProfileMerger) mergePeriods(ps ...*profile.Profile) {
+func (pw *ProfileMerger) mergePeriods(ps ...*Profile) {
 	pw.mergedProfile.Periods = make([]int64, 0, len(ps))
 
 	for _, p := range ps {
@@ -490,7 +519,7 @@ func (pw *ProfileMerger) mergePeriods(ps ...*profile.Profile) {
 	}
 }
 
-func (pw *ProfileMerger) mergeSampleTypes(ps ...*profile.Profile) {
+func (pw *ProfileMerger) mergeSampleTypes(ps ...*Profile) {
 	size := 0
 	for _, p := range ps {
 		size += len(p.SampleType)
@@ -501,24 +530,24 @@ func (pw *ProfileMerger) mergeSampleTypes(ps ...*profile.Profile) {
 	for _, p := range ps {
 		for _, vt := range p.SampleType {
 			pw.mergedProfile.SampleType = append(pw.mergedProfile.SampleType,
-				int64(pw.putString(vt.Type)),
-				int64(pw.putString(vt.Unit)),
+				int64(pw.getStringRef(uint64(vt.Type), p)),
+				int64(pw.getStringRef(uint64(vt.Unit), p)),
 			)
 		}
 	}
 }
 
-func (pw *ProfileMerger) putMapping(src *profile.Mapping) uint64 {
+func (pw *ProfileMerger) putMapping(src *Mapping, p *Profile) uint64 {
 	if src == nil {
 		return math.MaxUint64
 	}
 
-	mapping := &Mapping{
-		MemoryStart:     src.Start,
-		MemoryLimit:     src.Limit,
-		FileOffset:      src.Offset,
-		Filename:        int64(pw.putString(src.File)),
-		BuildId:         int64(pw.putString(src.BuildID)),
+	mapping := &MergeMapping{
+		MemoryStart:     src.MemoryStart,
+		MemoryLimit:     src.MemoryLimit,
+		FileOffset:      src.FileOffset,
+		Filename:        int64(pw.getStringRef(uint64(src.Filename), p)),
+		BuildId:         int64(pw.getStringRef(uint64(src.BuildId), p)),
 		HasFilenames:    src.HasFilenames,
 		HasFunctions:    src.HasFunctions,
 		HasInlineFrames: src.HasInlineFrames,
@@ -537,51 +566,52 @@ func (pw *ProfileMerger) putMapping(src *profile.Mapping) uint64 {
 	return mapping.Id
 }
 
-func (pw *ProfileMerger) asMergedSample(s *profile.Sample) *Sample {
-	mergedProfileSample := &Sample{
-		LocationId: make([]int64, 0, len(s.Location)),
+func (pw *ProfileMerger) asMergedSample(s *Sample, p *Profile) *MergeSample {
+	mergedProfileSample := &MergeSample{
+		LocationId: make([]int64, 0, len(s.LocationId)),
 		Value:      s.Value,
 	}
 
-	for _, loc := range s.Location {
-		mergedProfileSample.LocationId = append(mergedProfileSample.LocationId, int64(pw.putLocation(loc)))
+	for _, locId := range s.LocationId {
+		mergedProfileSample.LocationId = append(mergedProfileSample.LocationId, int64(pw.putLocation(p.Location[locId-1], p)))
 	}
 
 	return mergedProfileSample
 }
 
-func (pw *ProfileMerger) asMergedValueType(vt *profile.ValueType) *ValueType {
-	return &ValueType{
-		Type: int64(pw.putString(vt.Type)),
-		Unit: int64(pw.putString(vt.Unit)),
+func (pw *ProfileMerger) asMergedValueType(vt *ValueType) *MergeValueType {
+	return &MergeValueType{
+		Type: vt.Type,
+		Unit: vt.Unit,
 	}
 }
 
-func (pw *ProfileMerger) asMergedProfileLines(lines []profile.Line) []*Line {
-	mergedProfileLines := make([]*Line, 0, len(lines))
+func (pw *ProfileMerger) asMergedProfileLines(lines []*Line, p *Profile) []*MergeLine {
+	mergedProfileLines := make([]*MergeLine, 0, len(lines))
 	for _, ln := range lines {
-		mergedProfileLines = append(mergedProfileLines, pw.asMergedProfileLine(ln))
+		mergedProfileLines = append(mergedProfileLines, pw.asMergedProfileLine(ln, p))
 	}
 	return mergedProfileLines
 }
 
-func (pw *ProfileMerger) asMergedProfileLine(line profile.Line) *Line {
-	return &Line{
-		FunctionId: pw.putFunction(line.Function),
+func (pw *ProfileMerger) asMergedProfileLine(line *Line, p *Profile) *MergeLine {
+	return &MergeLine{
+		FunctionId: pw.putFunction(p.Function[line.FunctionId-1], p),
 		Line:       line.Line,
 	}
 }
 
-func (pw *ProfileMerger) putString(val string) int {
-	id, ok := pw.stringTable[val]
-	if !ok {
-		id = len(pw.stringTable) + 1
-		pw.stringTable[val] = id
+func (pw *ProfileMerger) getStringRef(id uint64, p *Profile) int {
+	strVal := p.StringTable[id]
+	if localId, ok := pw.stringTable[strVal]; ok {
+		return localId
 	}
-	return id
+	newId := len(pw.stringTable) + 1
+	pw.stringTable[strVal] = newId
+	return newId
 }
 
-func (pw *ProfileMerger) getFunctionKey(fn *Function) functionKey {
+func (pw *ProfileMerger) getFunctionKey(fn *MergeFunction) functionKey {
 	return functionKey{
 		name:       fn.Name,
 		systemName: fn.SystemName,
@@ -590,7 +620,7 @@ func (pw *ProfileMerger) getFunctionKey(fn *Function) functionKey {
 	}
 }
 
-func (pw *ProfileMerger) getMappingKey(m *Mapping) mappingKey {
+func (pw *ProfileMerger) getMappingKey(m *MergeMapping) mappingKey {
 	key := mappingKey{
 		start:  m.MemoryStart,
 		limit:  m.MemoryLimit,
@@ -607,7 +637,7 @@ func (pw *ProfileMerger) getMappingKey(m *Mapping) mappingKey {
 	return key
 }
 
-func (pw *ProfileMerger) getLocationKey(loc *Location) locationKey {
+func (pw *ProfileMerger) getLocationKey(loc *MergeLocation) locationKey {
 	key := locationKey{
 		mappingID: loc.MappingId,
 		address:   loc.Address,
@@ -626,27 +656,27 @@ func (pw *ProfileMerger) getLocationKey(loc *Location) locationKey {
 	return key
 }
 
-func (pw *ProfileMerger) putLine(src profile.Line) *Line {
-	return &Line{
-		FunctionId: pw.putFunction(src.Function),
+func (pw *ProfileMerger) putLine(src *Line, p *Profile) *MergeLine {
+	return &MergeLine{
+		FunctionId: pw.putFunction(p.Function[src.FunctionId-1], p),
 		Line:       src.Line,
 	}
 }
 
-func (pw *ProfileMerger) putLocation(src *profile.Location) uint64 {
+func (pw *ProfileMerger) putLocation(src *Location, p *Profile) uint64 {
 	if src == nil {
 		return math.MaxUint64
 	}
 
-	loc := &Location{
-		MappingId: pw.putMapping(src.Mapping),
+	loc := &MergeLocation{
+		MappingId: pw.putMapping(p.Mapping[src.MappingId-1], p),
 		Address:   src.Address,
-		Line:      make([]*Line, len(src.Line), len(src.Line)),
+		Line:      make([]*MergeLine, len(src.Line), len(src.Line)),
 		IsFolded:  src.IsFolded,
 	}
 
 	for i, line := range src.Line {
-		loc.Line[i] = pw.putLine(line)
+		loc.Line[i] = pw.putLine(line, p)
 	}
 
 	key := pw.getLocationKey(loc)
@@ -660,15 +690,15 @@ func (pw *ProfileMerger) putLocation(src *profile.Location) uint64 {
 	return loc.Id
 }
 
-func (pw *ProfileMerger) putFunction(src *profile.Function) uint64 {
+func (pw *ProfileMerger) putFunction(src *Function, p *Profile) uint64 {
 	if src == nil {
 		return math.MaxUint64
 	}
 
-	f := &Function{
-		Name:       int64(pw.putString(src.Name)),
-		SystemName: int64(pw.putString(src.SystemName)),
-		Filename:   int64(pw.putString(src.Filename)),
+	f := &MergeFunction{
+		Name:       int64(pw.getStringRef(uint64(src.Name), p)),
+		SystemName: int64(pw.getStringRef(uint64(src.SystemName), p)),
+		Filename:   int64(pw.getStringRef(uint64(src.Filename), p)),
 		StartLine:  src.StartLine,
 	}
 

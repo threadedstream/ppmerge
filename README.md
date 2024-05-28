@@ -18,7 +18,7 @@ input profiles.
 In order to understand how merger works, we need to dig a bit deeper into a profile structure
 
 ```go
-// Profile is an in-memory representation of profile.proto.
+// Profile is an in-memory representation of merged_profile.proto.
 type Profile struct {
 	SampleType        []*ValueType
 	DefaultSampleType string
