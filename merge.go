@@ -28,33 +28,6 @@ type locationKey struct {
 	isFolded           bool
 }
 
-type locationMap struct {
-	dense  []*MergeLocation
-	sparse map[uint64]*MergeLocation
-}
-
-func makeLocationMap(n int) locationMap {
-	return locationMap{
-		dense:  make([]*MergeLocation, n),
-		sparse: map[uint64]*MergeLocation{},
-	}
-}
-
-func (lm locationMap) get(id uint64) *MergeLocation {
-	if id < uint64(len(lm.dense)) {
-		return lm.dense[int(id)]
-	}
-	return lm.sparse[id]
-}
-
-func (lm locationMap) put(id uint64, location *MergeLocation) {
-	if id < uint64(len(lm.dense)) {
-		lm.dense[int(id)] = location
-		return
-	}
-	lm.sparse[id] = location
-}
-
 // ByteProfileUnPacker is the unpacker for MergedByteProfile
 type ByteProfileUnPacker struct {
 	mergedProfile *MergedByteProfile
