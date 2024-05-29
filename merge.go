@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const (
+	UnsymbolizableLocationAddress = 0x0
+)
+
 type functionKey struct {
 	name, systemName, filename, startLine int64
 }
@@ -641,12 +645,18 @@ func (pw *ProfileMerger) putLocation(src *Location, p *Profile) uint64 {
 		return math.MaxUint64
 	}
 
-	loc := &MergeLocation{
-		MappingId: pw.putMapping(p.Mapping[src.MappingId-1], p),
-		Address:   src.Address,
-		Line:      make([]*MergeLine, len(src.Line), len(src.Line)),
-		IsFolded:  src.IsFolded,
+	loc := &MergeLocation{}
+	if src.MappingId == 0 && len(src.Line) == 0 {
+		loc.Address = UnsymbolizableLocationAddress
 	}
+
+	if src.MappingId != 0 {
+		loc.MappingId = pw.putMapping(p.Mapping[src.MappingId-1], p)
+		loc.Address = src.Address
+	}
+
+	loc.IsFolded = src.IsFolded
+	loc.Line = make([]*MergeLine, len(src.Line), len(src.Line))
 
 	for i, line := range src.Line {
 		loc.Line[i] = pw.putLine(line, p)
