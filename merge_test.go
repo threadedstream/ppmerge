@@ -11,7 +11,7 @@ import (
 )
 
 func TestHeapMerge(t *testing.T) {
-	profiles := getProfilesVtProto(t, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(t, false, "hprof1", "hprof2", "hprof3", "hprof4")
 	profileMerger := NewProfileMerger()
 
 	// merge profiles
@@ -87,7 +87,7 @@ func TestHeapMerge(t *testing.T) {
 }
 
 func TestMergeWrite(t *testing.T) {
-	profiles := getProfilesVtProto(t, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(t, false, "hprof1", "hprof2", "hprof3", "hprof4")
 
 	profileMerger := NewProfileMerger()
 	mergedProfile := profileMerger.Merge(profiles...)
@@ -112,7 +112,7 @@ func TestMergeWrite(t *testing.T) {
 	require.Less(t, compressedBB.Len(), noCompactBB.Len())
 
 	// merge profiles with different sample types
-	profiles = getProfilesVtProto(t, "parca_heap", "parca_cpu", "parca_goroutine")
+	profiles = getProfilesVtProto(t, false, "parca_heap", "parca_cpu", "parca_goroutine")
 	mergedProfile = profileMerger.Merge(profiles...)
 	require.NotNil(t, mergedProfile)
 
@@ -130,7 +130,7 @@ func TestMergeWrite(t *testing.T) {
 
 func TestMergeUnpack(t *testing.T) {
 	t.Run("general merge unpack", func(t *testing.T) {
-		profiles := getProfilesVtProto(t, "hprof1", "hprof2", "hprof3", "hprof4")
+		profiles := getProfilesVtProto(t, false, "hprof1", "hprof2", "hprof3", "hprof4")
 
 		profileMerger := NewProfileMerger()
 		mergedProfile := profileMerger.Merge(profiles...)
@@ -200,7 +200,7 @@ func TestMergeUnpack(t *testing.T) {
 
 func BenchmarkVtProtobufParsing(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		profiles := getProfilesVtProto(b, "hprof1", "hprof2", "hprof3", "hprof4")
+		profiles := getProfilesVtProto(b, false, "hprof1", "hprof2", "hprof3", "hprof4")
 		for _, p := range profiles {
 			p.ReturnToVTPool()
 		}
@@ -214,7 +214,7 @@ func BenchmarkProtobufParsing(b *testing.B) {
 }
 
 func BenchmarkProfileMerger(b *testing.B) {
-	profiles := getProfilesVtProto(b, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(b, false, "hprof1", "hprof2", "hprof3", "hprof4")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -224,7 +224,7 @@ func BenchmarkProfileMerger(b *testing.B) {
 }
 
 func BenchmarkProfileUnPacker(b *testing.B) {
-	profiles := getProfilesVtProto(b, "hprof1", "hprof2", "hprof3", "hprof4")
+	profiles := getProfilesVtProto(b, false, "hprof1", "hprof2", "hprof3", "hprof4")
 
 	profileMerger := NewProfileMerger()
 	mergedProfile := profileMerger.Merge(profiles...)
@@ -252,13 +252,13 @@ func getProfiles(t require.TestingT, paths ...string) []*profile.Profile {
 	return profiles
 }
 
-func getProfilesVtProto(t require.TestingT, paths ...string) []*Profile {
+func getProfilesVtProto(t require.TestingT, debugGoroutine bool, paths ...string) []*Profile {
 	dir := "./testdata/"
 	var profiles []*Profile
 	for _, profileName := range paths {
 		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
 		require.NoError(t, err)
-		prof, err := ParseProfile(file)
+		prof, err := ParseProfile(file, debugGoroutine)
 		require.NoError(t, err)
 		profiles = append(profiles, prof)
 	}
