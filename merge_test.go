@@ -199,6 +199,13 @@ func TestMergeUnpack(t *testing.T) {
 }
 
 func BenchmarkVtProtobufParsing(b *testing.B) {
+	file, err := os.OpenFile("./testdata/parca_goroutine_debug_1_1", os.O_RDONLY, os.ModePerm)
+	require.NoError(b, err)
+	bs, err := io.ReadAll(file)
+	require.NoError(b, err)
+	gp := GoroutineProfileFromVTPool()
+	require.NoError(b, gp.Parse(bs))
+
 	for i := 0; i < b.N; i++ {
 		profiles := getProfilesVtProto(b, false, "hprof1", "hprof2", "hprof3", "hprof4")
 		for _, p := range profiles {
@@ -258,7 +265,7 @@ func getProfilesVtProto(t require.TestingT, debugGoroutine bool, paths ...string
 	for _, profileName := range paths {
 		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
 		require.NoError(t, err)
-		prof, err := ParseProfile(file, debugGoroutine)
+		prof, err := ParseProfile(file)
 		require.NoError(t, err)
 		profiles = append(profiles, prof)
 	}

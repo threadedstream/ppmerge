@@ -1,22 +1,27 @@
 package ppmerge
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
-	"sort"
+	"regexp"
+	"strconv"
 	"strings"
 
-	"github.com/google/pprof/profile"
 	"github.com/pkg/errors"
 )
 
-func ParseProfileData(rawProfile []byte, debugGoroutine bool) (*Profile, error) {
-	if debugGoroutine {
-		return parseGoroutineDebugProfile(rawProfile)
-	}
+var (
+	countStartRE = regexp.MustCompile(`\A(\S+) profile: total (\d+)\z`)
+	countRE      = regexp.MustCompile(`\A(\d+) @(( 0x[0-9a-f]+)+)\z`)
+)
 
+var errUnrecognized = fmt.Errorf("unrecognized profile format")
+var errMalformed = fmt.Errorf("malformed profile format")
+
+func ParseProfileData(rawProfile []byte) (*Profile, error) {
 	if len(rawProfile) >= 2 && rawProfile[0] == 0x1f && rawProfile[1] == 0x8b {
 		gz, err := gzip.NewReader(bytes.NewBuffer(rawProfile))
 		if err == nil {
@@ -37,65 +42,102 @@ func ParseProfileData(rawProfile []byte, debugGoroutine bool) (*Profile, error) 
 	return p, nil
 }
 
-func ParseProfile(rd io.Reader, debugGoroutine bool) (*Profile, error) {
+func ParseProfile(rd io.Reader) (*Profile, error) {
 	b, err := io.ReadAll(rd)
 	if err == nil {
-		return ParseProfileData(b, debugGoroutine)
+		return ParseProfileData(b)
 	}
 	return nil, errors.Errorf("could not read profile: %v", err)
 }
 
-func parseGoroutineDebugProfile(rawProfile []byte) (*Profile, error) {
-	p, err := profile.ParseData(rawProfile)
-	if err != nil {
-		return nil, err
+// Parse parses goroutine profiles in debug=1 format
+func (gp *GoroutineProfile) Parse(rawProfile []byte) error {
+	s := bufio.NewScanner(bytes.NewBuffer(rawProfile))
+	for s.Scan() && isSpaceOrComment(s.Text()) {
+	}
+	if err := s.Err(); err != nil {
+		return err
+	}
+	if err := gp.parseTotalCount(s); err != nil {
+		return err
 	}
 
-	vtProfile := ProfileFromVTPool()
-	vtProfile.From(p)
-
-	return vtProfile, nil
+	return gp.parseStackTraces(s)
 }
 
-func (p *Profile) WriteDebug() (string, error) {
-	if len(p.SampleType) == 0 {
-		return "", errors.New("sample type is empty")
+func isSpaceOrComment(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	return len(trimmed) == 0 || trimmed[0] == '#'
+}
+
+func isSpace(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	return len(trimmed) == 0
+}
+
+func (gp *GoroutineProfile) parseTotalCount(s *bufio.Scanner) error {
+	m := countStartRE.FindStringSubmatch(s.Text())
+	if m == nil {
+		return errUnrecognized
 	}
 
-	sampleType := p.SampleType[0].Type
-	switch t := p.StringTable[sampleType]; t {
-	default:
-		return "", errors.Errorf("unsupported sample type: %s", t)
-	case "goroutine":
+	totalCount, err := strconv.ParseUint(m[2], 10, 64)
+	if err != nil {
+		return err
 	}
+	gp.Total = totalCount
+	return nil
+}
 
-	bb := new(strings.Builder)
+func (gp *GoroutineProfile) parseStackTraces(s *bufio.Scanner) error {
+	stringTable := map[string]uint64{}
 
-	sort.Slice(p.Sample, func(i, j int) bool {
-		return p.Sample[i].Value[0] > p.Sample[j].Value[0]
-	})
-
-	var total int64
-	for _, s := range p.Sample {
-		total += s.Value[0]
-	}
-
-	fmt.Fprintf(bb, "goroutine profile: total %d\n", total)
-
-	for _, s := range p.Sample {
-		fmt.Fprintf(bb, "%d\n", s.Value[0])
-		for i := len(s.LocationId) - 1; i > 0; i-- {
-			l := p.Location[s.LocationId[i]-1]
-			if len(l.Line) == 0 {
-				continue
-			}
-			// TODO(threadedstream): support outputting inlined functions
-			line := l.Line[0]
-			fn := p.Function[line.FunctionId-1]
-			fmt.Fprintf(bb, "#\t%#x\t%s\t%s:%d\n", l.Address, p.StringTable[fn.Name], p.StringTable[fn.Filename], line.Line)
+	for s.Scan() {
+		line := s.Text()
+		if isSpace(line) {
+			continue
 		}
-		bb.WriteRune('\n')
+		stt, err := parseStackTrace(line, s, stringTable)
+		if err != nil {
+			return err
+		}
+		gp.Stacktraces = append(gp.Stacktraces, stt)
 	}
 
-	return bb.String(), nil
+	return nil
+}
+
+func parseStackTrace(line string, s *bufio.Scanner, stringTable map[string]uint64) (*Stacktrace, error) {
+	m := countRE.FindStringSubmatch(line)
+	if m == nil {
+		return nil, errMalformed
+	}
+	n, err := strconv.ParseUint(m[1], 0, 64)
+	if err != nil {
+		return nil, errMalformed
+	}
+	fields := strings.Fields(m[2])
+	st := &Stacktrace{}
+	st.Total = n
+	st.PC = make([]uint64, 0, len(fields))
+	for _, pc := range fields {
+		addr, err := strconv.ParseUint(pc, 0, 64)
+		if err != nil {
+			return nil, errMalformed
+		}
+		st.PC = append(st.PC, addr)
+	}
+
+	// #\t%#x\t%s+%#x\t%s:%d
+
+	// parse functions
+	for s.Scan() && !isSpace(s.Text()) {
+		line = s.Text()
+		if strings.HasPrefix(line, "# labels:") {
+			continue
+		}
+
+	}
+
+	return st, nil
 }
