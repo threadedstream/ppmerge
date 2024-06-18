@@ -89,7 +89,7 @@ func (p *Profile) WriteDebug() (string, error) {
 			if len(l.Line) == 0 {
 				continue
 			}
-			// TODO(threadedstream): output goroutines in debug format
+			// TODO(threadedstream): support outputting inlined functions
 			line := l.Line[0]
 			fn := p.Function[line.FunctionId-1]
 			fmt.Fprintf(bb, "#\t%#x\t%s\t%s:%d\n", l.Address, p.StringTable[fn.Name], p.StringTable[fn.Filename], line.Line)
