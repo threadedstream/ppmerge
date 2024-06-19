@@ -150,8 +150,7 @@ func TestGoroutineProfileSizeWin(t *testing.T) {
 	_, _ = gz.Write(gdbUncompressed.Bytes())
 	_ = gz.Flush()
 
-	println(float32(gpb.Len()) / float32(gdbCompressed.Len()) * 100)
-	println()
+	require.Less(t, gpb.Len(), gdbCompressed.Len())
 }
 
 func TestMergeUnpack(t *testing.T) {
