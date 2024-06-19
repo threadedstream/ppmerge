@@ -2,9 +2,17 @@ syntax = "proto3";
 
 package dummymergedprofile;
 
+import "profile.proto";
 
 option go_package = "github.com/threadedstream/ppmerge";
 
+
+message MergedGoroutineProfile {
+  repeated uint64 totals = 1;
+  repeated Stacktrace stacktraces = 2;
+  repeated string string_table = 3;
+  repeated uint64 num_stacktraces = 4;
+}
 
 // MergedByteProfile may represent merged profiles downloaded with debug option
 message MergedByteProfile {

@@ -6,6 +6,26 @@ package dummymergedprofile;
 option go_package = "github.com/threadedstream/ppmerge";
 
 
+message GoroutineProfile {
+  uint64 total = 1;
+  repeated Stacktrace stacktraces = 2;
+  repeated string string_table = 3;
+}
+
+message Stacktrace {
+  uint64 total = 1;
+  repeated uint64 PC = 2;
+  repeated Frame frames = 3;
+}
+
+message Frame {
+  uint64 address = 1;
+  uint64 function_name = 2;
+  uint64 offset = 3;
+  uint64 filename = 4;
+  uint64 line = 5;
+}
+
 message Profile {
   // A description of the samples associated with each Sample.value.
   // For a cpu profile this might be:
