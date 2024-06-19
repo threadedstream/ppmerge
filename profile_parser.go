@@ -16,6 +16,7 @@ import (
 var (
 	countStartRE = regexp.MustCompile(`\A(\S+) profile: total (\d+)\z`)
 	countRE      = regexp.MustCompile(`\A(\d+) @(( 0x[0-9a-f]+)+)\z`)
+	frameInfoRe  = regexp.MustCompile(`\A#\t+(0x[0-9a-f]+)\t+(\S+)[+](0x[0-9a-f]+)\t+(\S+):(\d+)\z`)
 )
 
 var errUnrecognized = fmt.Errorf("unrecognized profile format")
@@ -50,6 +51,47 @@ func ParseProfile(rd io.Reader) (*Profile, error) {
 	return nil, errors.Errorf("could not read profile: %v", err)
 }
 
+func (gp *GoroutineProfile) MarshalDebug() string {
+	var sb strings.Builder
+
+	gp.writeProlog(&sb)
+
+	gp.writeStackTraces(&sb)
+
+	return sb.String()
+}
+
+func (gp *GoroutineProfile) writeProlog(sb *strings.Builder) {
+	fmt.Fprintf(sb, "goroutine profile: total %d\n", gp.GetTotal())
+}
+
+func (gp *GoroutineProfile) writeStackTraces(sb *strings.Builder) {
+	for _, st := range gp.GetStacktraces() {
+		gp.writeStackTrace(sb, st)
+		sb.WriteRune('\n')
+	}
+}
+
+func (gp *GoroutineProfile) writeStackTrace(sb *strings.Builder, st *Stacktrace) {
+	pc := make([]string, 0, len(st.PC))
+	for _, addr := range st.PC {
+		pc = append(pc, fmt.Sprintf("%#x", addr))
+	}
+	fmt.Fprintf(sb, "%d @ %s\n", st.Total, strings.Join(pc, " "))
+	for _, f := range st.GetFrames() {
+		gp.writeFrame(sb, f)
+	}
+}
+
+func (gp *GoroutineProfile) writeFrame(sb *strings.Builder, f *Frame) {
+	if f.FunctionName == 0 {
+		// empty function name
+		fmt.Fprintf(sb, "#\t%#x\n", f.Address)
+	} else {
+		fmt.Fprintf(sb, "#\t%#x\t%s+%#x\t%s:%d\n", f.Address, gp.StringTable[f.FunctionName], f.Offset, gp.StringTable[f.Filename], f.Line)
+	}
+}
+
 // Parse parses goroutine profiles in debug=1 format
 func (gp *GoroutineProfile) Parse(rawProfile []byte) error {
 	s := bufio.NewScanner(bytes.NewBuffer(rawProfile))
@@ -58,11 +100,22 @@ func (gp *GoroutineProfile) Parse(rawProfile []byte) error {
 	if err := s.Err(); err != nil {
 		return err
 	}
+
+	stringTable := map[string]uint64{
+		"": 0,
+	}
+
 	if err := gp.parseTotalCount(s); err != nil {
 		return err
 	}
 
-	return gp.parseStackTraces(s)
+	if err := gp.parseStackTraces(s, stringTable); err != nil {
+		return err
+	}
+
+	gp.finalizeStringTable(stringTable)
+
+	return nil
 }
 
 func isSpaceOrComment(line string) bool {
@@ -89,9 +142,7 @@ func (gp *GoroutineProfile) parseTotalCount(s *bufio.Scanner) error {
 	return nil
 }
 
-func (gp *GoroutineProfile) parseStackTraces(s *bufio.Scanner) error {
-	stringTable := map[string]uint64{}
-
+func (gp *GoroutineProfile) parseStackTraces(s *bufio.Scanner, stringTable map[string]uint64) error {
 	for s.Scan() {
 		line := s.Text()
 		if isSpace(line) {
@@ -105,6 +156,13 @@ func (gp *GoroutineProfile) parseStackTraces(s *bufio.Scanner) error {
 	}
 
 	return nil
+}
+
+func (gp *GoroutineProfile) finalizeStringTable(stringTable map[string]uint64) {
+	gp.StringTable = make([]string, len(stringTable))
+	for k, v := range stringTable {
+		gp.StringTable[v] = k
+	}
 }
 
 func parseStackTrace(line string, s *bufio.Scanner, stringTable map[string]uint64) (*Stacktrace, error) {
@@ -128,16 +186,54 @@ func parseStackTrace(line string, s *bufio.Scanner, stringTable map[string]uint6
 		st.PC = append(st.PC, addr)
 	}
 
-	// #\t%#x\t%s+%#x\t%s:%d
-
 	// parse functions
 	for s.Scan() && !isSpace(s.Text()) {
+		frame := &Frame{}
 		line = s.Text()
 		if strings.HasPrefix(line, "# labels:") {
 			continue
 		}
+		m = frameInfoRe.FindStringSubmatch(line)
+		if m == nil {
+			return nil, errMalformed
+		}
 
+		// remove 0x in the beginning
+		validHex := m[1][2:]
+		locAddr, err := strconv.ParseUint(validHex, 16, 64)
+		if err != nil {
+			return nil, err
+		}
+		frame.Address = locAddr
+		frame.FunctionName = putString(stringTable, m[2])
+
+		validHex = m[3][2:]
+		offset, err := strconv.ParseUint(validHex, 16, 64)
+		if err != nil {
+			return nil, err
+		}
+		frame.Offset = offset
+		frame.Filename = putString(stringTable, m[4])
+		lineNum, err := strconv.ParseUint(strings.Trim(m[5], "\""), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		frame.Line = lineNum
+		st.Frames = append(st.Frames, frame)
+	}
+
+	if err = s.Err(); err != nil {
+		return nil, err
 	}
 
 	return st, nil
+}
+
+func putString(stringTable map[string]uint64, val string) uint64 {
+	if id, ok := stringTable[val]; ok {
+		return id
+	}
+	id := uint64(len(stringTable))
+	stringTable[val] = id
+	return id
 }

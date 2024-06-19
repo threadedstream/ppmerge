@@ -20,6 +20,77 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type MergedGoroutineProfile struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Totals         []uint64      `protobuf:"varint,1,rep,packed,name=totals,proto3" json:"totals,omitempty"`
+	Stacktraces    []*Stacktrace `protobuf:"bytes,2,rep,name=stacktraces,proto3" json:"stacktraces,omitempty"`
+	StringTable    []string      `protobuf:"bytes,3,rep,name=string_table,json=stringTable,proto3" json:"string_table,omitempty"`
+	NumStacktraces []uint64      `protobuf:"varint,4,rep,packed,name=num_stacktraces,json=numStacktraces,proto3" json:"num_stacktraces,omitempty"`
+}
+
+func (x *MergedGoroutineProfile) Reset() {
+	*x = MergedGoroutineProfile{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_merged_profile_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MergedGoroutineProfile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MergedGoroutineProfile) ProtoMessage() {}
+
+func (x *MergedGoroutineProfile) ProtoReflect() protoreflect.Message {
+	mi := &file_merged_profile_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MergedGoroutineProfile.ProtoReflect.Descriptor instead.
+func (*MergedGoroutineProfile) Descriptor() ([]byte, []int) {
+	return file_merged_profile_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *MergedGoroutineProfile) GetTotals() []uint64 {
+	if x != nil {
+		return x.Totals
+	}
+	return nil
+}
+
+func (x *MergedGoroutineProfile) GetStacktraces() []*Stacktrace {
+	if x != nil {
+		return x.Stacktraces
+	}
+	return nil
+}
+
+func (x *MergedGoroutineProfile) GetStringTable() []string {
+	if x != nil {
+		return x.StringTable
+	}
+	return nil
+}
+
+func (x *MergedGoroutineProfile) GetNumStacktraces() []uint64 {
+	if x != nil {
+		return x.NumStacktraces
+	}
+	return nil
+}
+
 // MergedByteProfile may represent merged profiles downloaded with debug option
 type MergedByteProfile struct {
 	state         protoimpl.MessageState
@@ -32,7 +103,7 @@ type MergedByteProfile struct {
 func (x *MergedByteProfile) Reset() {
 	*x = MergedByteProfile{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[0]
+		mi := &file_merged_profile_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -45,7 +116,7 @@ func (x *MergedByteProfile) String() string {
 func (*MergedByteProfile) ProtoMessage() {}
 
 func (x *MergedByteProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[0]
+	mi := &file_merged_profile_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +129,7 @@ func (x *MergedByteProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergedByteProfile.ProtoReflect.Descriptor instead.
 func (*MergedByteProfile) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{0}
+	return file_merged_profile_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *MergedByteProfile) GetProfiles() [][]byte {
@@ -94,7 +165,7 @@ type MergedProfile struct {
 func (x *MergedProfile) Reset() {
 	*x = MergedProfile{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[1]
+		mi := &file_merged_profile_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -107,7 +178,7 @@ func (x *MergedProfile) String() string {
 func (*MergedProfile) ProtoMessage() {}
 
 func (x *MergedProfile) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[1]
+	mi := &file_merged_profile_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -120,7 +191,7 @@ func (x *MergedProfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergedProfile.ProtoReflect.Descriptor instead.
 func (*MergedProfile) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{1}
+	return file_merged_profile_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *MergedProfile) GetSampleType() []int64 {
@@ -241,7 +312,7 @@ type MergeValueType struct {
 func (x *MergeValueType) Reset() {
 	*x = MergeValueType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[2]
+		mi := &file_merged_profile_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -254,7 +325,7 @@ func (x *MergeValueType) String() string {
 func (*MergeValueType) ProtoMessage() {}
 
 func (x *MergeValueType) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[2]
+	mi := &file_merged_profile_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -267,7 +338,7 @@ func (x *MergeValueType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeValueType.ProtoReflect.Descriptor instead.
 func (*MergeValueType) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{2}
+	return file_merged_profile_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *MergeValueType) GetType() int64 {
@@ -296,7 +367,7 @@ type MergeSample struct {
 func (x *MergeSample) Reset() {
 	*x = MergeSample{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[3]
+		mi := &file_merged_profile_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -309,7 +380,7 @@ func (x *MergeSample) String() string {
 func (*MergeSample) ProtoMessage() {}
 
 func (x *MergeSample) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[3]
+	mi := &file_merged_profile_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -322,7 +393,7 @@ func (x *MergeSample) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeSample.ProtoReflect.Descriptor instead.
 func (*MergeSample) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{3}
+	return file_merged_profile_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *MergeSample) GetLocationId() []int64 {
@@ -350,7 +421,7 @@ type LocationID struct {
 func (x *LocationID) Reset() {
 	*x = LocationID{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[4]
+		mi := &file_merged_profile_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -363,7 +434,7 @@ func (x *LocationID) String() string {
 func (*LocationID) ProtoMessage() {}
 
 func (x *LocationID) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[4]
+	mi := &file_merged_profile_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -376,7 +447,7 @@ func (x *LocationID) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocationID.ProtoReflect.Descriptor instead.
 func (*LocationID) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{4}
+	return file_merged_profile_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LocationID) GetId() []int64 {
@@ -397,7 +468,7 @@ type FunctionCompact struct {
 func (x *FunctionCompact) Reset() {
 	*x = FunctionCompact{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[5]
+		mi := &file_merged_profile_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -410,7 +481,7 @@ func (x *FunctionCompact) String() string {
 func (*FunctionCompact) ProtoMessage() {}
 
 func (x *FunctionCompact) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[5]
+	mi := &file_merged_profile_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -423,7 +494,7 @@ func (x *FunctionCompact) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FunctionCompact.ProtoReflect.Descriptor instead.
 func (*FunctionCompact) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{5}
+	return file_merged_profile_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *FunctionCompact) GetData() []int64 {
@@ -448,7 +519,7 @@ type FunctionOrFunctionRef struct {
 func (x *FunctionOrFunctionRef) Reset() {
 	*x = FunctionOrFunctionRef{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[6]
+		mi := &file_merged_profile_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -461,7 +532,7 @@ func (x *FunctionOrFunctionRef) String() string {
 func (*FunctionOrFunctionRef) ProtoMessage() {}
 
 func (x *FunctionOrFunctionRef) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[6]
+	mi := &file_merged_profile_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +545,7 @@ func (x *FunctionOrFunctionRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FunctionOrFunctionRef.ProtoReflect.Descriptor instead.
 func (*FunctionOrFunctionRef) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{6}
+	return file_merged_profile_proto_rawDescGZIP(), []int{7}
 }
 
 func (m *FunctionOrFunctionRef) GetFunctionOrRef() isFunctionOrFunctionRef_FunctionOrRef {
@@ -526,7 +597,7 @@ type FunctionRef struct {
 func (x *FunctionRef) Reset() {
 	*x = FunctionRef{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[7]
+		mi := &file_merged_profile_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -539,7 +610,7 @@ func (x *FunctionRef) String() string {
 func (*FunctionRef) ProtoMessage() {}
 
 func (x *FunctionRef) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[7]
+	mi := &file_merged_profile_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -552,7 +623,7 @@ func (x *FunctionRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FunctionRef.ProtoReflect.Descriptor instead.
 func (*FunctionRef) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{7}
+	return file_merged_profile_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *FunctionRef) GetId() uint64 {
@@ -590,7 +661,7 @@ type MergeFunction struct {
 func (x *MergeFunction) Reset() {
 	*x = MergeFunction{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[8]
+		mi := &file_merged_profile_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -603,7 +674,7 @@ func (x *MergeFunction) String() string {
 func (*MergeFunction) ProtoMessage() {}
 
 func (x *MergeFunction) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[8]
+	mi := &file_merged_profile_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -616,7 +687,7 @@ func (x *MergeFunction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeFunction.ProtoReflect.Descriptor instead.
 func (*MergeFunction) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{8}
+	return file_merged_profile_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *MergeFunction) GetId() uint64 {
@@ -692,7 +763,7 @@ type MergeLocation struct {
 func (x *MergeLocation) Reset() {
 	*x = MergeLocation{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[9]
+		mi := &file_merged_profile_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -705,7 +776,7 @@ func (x *MergeLocation) String() string {
 func (*MergeLocation) ProtoMessage() {}
 
 func (x *MergeLocation) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[9]
+	mi := &file_merged_profile_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -718,7 +789,7 @@ func (x *MergeLocation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeLocation.ProtoReflect.Descriptor instead.
 func (*MergeLocation) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{9}
+	return file_merged_profile_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *MergeLocation) GetId() uint64 {
@@ -770,7 +841,7 @@ type MergeLine struct {
 func (x *MergeLine) Reset() {
 	*x = MergeLine{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[10]
+		mi := &file_merged_profile_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -783,7 +854,7 @@ func (x *MergeLine) String() string {
 func (*MergeLine) ProtoMessage() {}
 
 func (x *MergeLine) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[10]
+	mi := &file_merged_profile_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +867,7 @@ func (x *MergeLine) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeLine.ProtoReflect.Descriptor instead.
 func (*MergeLine) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{10}
+	return file_merged_profile_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *MergeLine) GetFunctionId() uint64 {
@@ -844,7 +915,7 @@ type MergeMapping struct {
 func (x *MergeMapping) Reset() {
 	*x = MergeMapping{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_merged_profile_proto_msgTypes[11]
+		mi := &file_merged_profile_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -857,7 +928,7 @@ func (x *MergeMapping) String() string {
 func (*MergeMapping) ProtoMessage() {}
 
 func (x *MergeMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_merged_profile_proto_msgTypes[11]
+	mi := &file_merged_profile_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -870,7 +941,7 @@ func (x *MergeMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MergeMapping.ProtoReflect.Descriptor instead.
 func (*MergeMapping) Descriptor() ([]byte, []int) {
-	return file_merged_profile_proto_rawDescGZIP(), []int{11}
+	return file_merged_profile_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *MergeMapping) GetId() uint64 {
@@ -948,7 +1019,20 @@ var File_merged_profile_proto protoreflect.FileDescriptor
 var file_merged_profile_proto_rawDesc = []byte{
 	0x0a, 0x14, 0x6d, 0x65, 0x72, 0x67, 0x65, 0x64, 0x5f, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65,
 	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x12, 0x64, 0x75, 0x6d, 0x6d, 0x79, 0x6d, 0x65, 0x72,
-	0x67, 0x65, 0x64, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x22, 0x2f, 0x0a, 0x11, 0x4d, 0x65,
+	0x67, 0x65, 0x64, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x1a, 0x0d, 0x70, 0x72, 0x6f, 0x66,
+	0x69, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xbe, 0x01, 0x0a, 0x16, 0x4d, 0x65,
+	0x72, 0x67, 0x65, 0x64, 0x47, 0x6f, 0x72, 0x6f, 0x75, 0x74, 0x69, 0x6e, 0x65, 0x50, 0x72, 0x6f,
+	0x66, 0x69, 0x6c, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x73, 0x18, 0x01,
+	0x20, 0x03, 0x28, 0x04, 0x52, 0x06, 0x74, 0x6f, 0x74, 0x61, 0x6c, 0x73, 0x12, 0x40, 0x0a, 0x0b,
+	0x73, 0x74, 0x61, 0x63, 0x6b, 0x74, 0x72, 0x61, 0x63, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x1e, 0x2e, 0x64, 0x75, 0x6d, 0x6d, 0x79, 0x6d, 0x65, 0x72, 0x67, 0x65, 0x64, 0x70,
+	0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x2e, 0x53, 0x74, 0x61, 0x63, 0x6b, 0x74, 0x72, 0x61, 0x63,
+	0x65, 0x52, 0x0b, 0x73, 0x74, 0x61, 0x63, 0x6b, 0x74, 0x72, 0x61, 0x63, 0x65, 0x73, 0x12, 0x21,
+	0x0a, 0x0c, 0x73, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x5f, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x18, 0x03,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x54, 0x61, 0x62, 0x6c,
+	0x65, 0x12, 0x27, 0x0a, 0x0f, 0x6e, 0x75, 0x6d, 0x5f, 0x73, 0x74, 0x61, 0x63, 0x6b, 0x74, 0x72,
+	0x61, 0x63, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x04, 0x52, 0x0e, 0x6e, 0x75, 0x6d, 0x53,
+	0x74, 0x61, 0x63, 0x6b, 0x74, 0x72, 0x61, 0x63, 0x65, 0x73, 0x22, 0x2f, 0x0a, 0x11, 0x4d, 0x65,
 	0x72, 0x67, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x12,
 	0x1a, 0x0a, 0x08, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
 	0x0c, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x22, 0x8d, 0x05, 0x0a, 0x0d,
@@ -1083,34 +1167,37 @@ func file_merged_profile_proto_rawDescGZIP() []byte {
 	return file_merged_profile_proto_rawDescData
 }
 
-var file_merged_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_merged_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_merged_profile_proto_goTypes = []interface{}{
-	(*MergedByteProfile)(nil),     // 0: dummymergedprofile.MergedByteProfile
-	(*MergedProfile)(nil),         // 1: dummymergedprofile.MergedProfile
-	(*MergeValueType)(nil),        // 2: dummymergedprofile.MergeValueType
-	(*MergeSample)(nil),           // 3: dummymergedprofile.MergeSample
-	(*LocationID)(nil),            // 4: dummymergedprofile.LocationID
-	(*FunctionCompact)(nil),       // 5: dummymergedprofile.FunctionCompact
-	(*FunctionOrFunctionRef)(nil), // 6: dummymergedprofile.FunctionOrFunctionRef
-	(*FunctionRef)(nil),           // 7: dummymergedprofile.FunctionRef
-	(*MergeFunction)(nil),         // 8: dummymergedprofile.MergeFunction
-	(*MergeLocation)(nil),         // 9: dummymergedprofile.MergeLocation
-	(*MergeLine)(nil),             // 10: dummymergedprofile.MergeLine
-	(*MergeMapping)(nil),          // 11: dummymergedprofile.MergeMapping
+	(*MergedGoroutineProfile)(nil), // 0: dummymergedprofile.MergedGoroutineProfile
+	(*MergedByteProfile)(nil),      // 1: dummymergedprofile.MergedByteProfile
+	(*MergedProfile)(nil),          // 2: dummymergedprofile.MergedProfile
+	(*MergeValueType)(nil),         // 3: dummymergedprofile.MergeValueType
+	(*MergeSample)(nil),            // 4: dummymergedprofile.MergeSample
+	(*LocationID)(nil),             // 5: dummymergedprofile.LocationID
+	(*FunctionCompact)(nil),        // 6: dummymergedprofile.FunctionCompact
+	(*FunctionOrFunctionRef)(nil),  // 7: dummymergedprofile.FunctionOrFunctionRef
+	(*FunctionRef)(nil),            // 8: dummymergedprofile.FunctionRef
+	(*MergeFunction)(nil),          // 9: dummymergedprofile.MergeFunction
+	(*MergeLocation)(nil),          // 10: dummymergedprofile.MergeLocation
+	(*MergeLine)(nil),              // 11: dummymergedprofile.MergeLine
+	(*MergeMapping)(nil),           // 12: dummymergedprofile.MergeMapping
+	(*Stacktrace)(nil),             // 13: dummymergedprofile.Stacktrace
 }
 var file_merged_profile_proto_depIdxs = []int32{
-	3,  // 0: dummymergedprofile.MergedProfile.samples:type_name -> dummymergedprofile.MergeSample
-	8,  // 1: dummymergedprofile.MergedProfile.functions:type_name -> dummymergedprofile.MergeFunction
-	9,  // 2: dummymergedprofile.MergedProfile.locations:type_name -> dummymergedprofile.MergeLocation
-	11, // 3: dummymergedprofile.MergedProfile.mappings:type_name -> dummymergedprofile.MergeMapping
-	8,  // 4: dummymergedprofile.FunctionOrFunctionRef.function:type_name -> dummymergedprofile.MergeFunction
-	7,  // 5: dummymergedprofile.FunctionOrFunctionRef.ref:type_name -> dummymergedprofile.FunctionRef
-	10, // 6: dummymergedprofile.MergeLocation.line:type_name -> dummymergedprofile.MergeLine
-	7,  // [7:7] is the sub-list for method output_type
-	7,  // [7:7] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	13, // 0: dummymergedprofile.MergedGoroutineProfile.stacktraces:type_name -> dummymergedprofile.Stacktrace
+	4,  // 1: dummymergedprofile.MergedProfile.samples:type_name -> dummymergedprofile.MergeSample
+	9,  // 2: dummymergedprofile.MergedProfile.functions:type_name -> dummymergedprofile.MergeFunction
+	10, // 3: dummymergedprofile.MergedProfile.locations:type_name -> dummymergedprofile.MergeLocation
+	12, // 4: dummymergedprofile.MergedProfile.mappings:type_name -> dummymergedprofile.MergeMapping
+	9,  // 5: dummymergedprofile.FunctionOrFunctionRef.function:type_name -> dummymergedprofile.MergeFunction
+	8,  // 6: dummymergedprofile.FunctionOrFunctionRef.ref:type_name -> dummymergedprofile.FunctionRef
+	11, // 7: dummymergedprofile.MergeLocation.line:type_name -> dummymergedprofile.MergeLine
+	8,  // [8:8] is the sub-list for method output_type
+	8,  // [8:8] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_merged_profile_proto_init() }
@@ -1118,9 +1205,10 @@ func file_merged_profile_proto_init() {
 	if File_merged_profile_proto != nil {
 		return
 	}
+	file_profile_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_merged_profile_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MergedByteProfile); i {
+			switch v := v.(*MergedGoroutineProfile); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1132,7 +1220,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MergedProfile); i {
+			switch v := v.(*MergedByteProfile); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1144,7 +1232,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MergeValueType); i {
+			switch v := v.(*MergedProfile); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1156,7 +1244,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MergeSample); i {
+			switch v := v.(*MergeValueType); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1168,7 +1256,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*LocationID); i {
+			switch v := v.(*MergeSample); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1180,7 +1268,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FunctionCompact); i {
+			switch v := v.(*LocationID); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1192,7 +1280,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FunctionOrFunctionRef); i {
+			switch v := v.(*FunctionCompact); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1204,7 +1292,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*FunctionRef); i {
+			switch v := v.(*FunctionOrFunctionRef); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1216,7 +1304,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MergeFunction); i {
+			switch v := v.(*FunctionRef); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1228,7 +1316,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MergeLocation); i {
+			switch v := v.(*MergeFunction); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1240,7 +1328,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MergeLine); i {
+			switch v := v.(*MergeLocation); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1252,6 +1340,18 @@ func file_merged_profile_proto_init() {
 			}
 		}
 		file_merged_profile_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MergeLine); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_merged_profile_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MergeMapping); i {
 			case 0:
 				return &v.state
@@ -1264,7 +1364,7 @@ func file_merged_profile_proto_init() {
 			}
 		}
 	}
-	file_merged_profile_proto_msgTypes[6].OneofWrappers = []interface{}{
+	file_merged_profile_proto_msgTypes[7].OneofWrappers = []interface{}{
 		(*FunctionOrFunctionRef_Function)(nil),
 		(*FunctionOrFunctionRef_Ref)(nil),
 	}
@@ -1274,7 +1374,7 @@ func file_merged_profile_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_merged_profile_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

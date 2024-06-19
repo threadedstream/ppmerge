@@ -2,6 +2,7 @@ package ppmerge
 
 import (
 	"bytes"
+	"compress/gzip"
 	"io"
 	"os"
 	"testing"
@@ -128,6 +129,31 @@ func TestMergeWrite(t *testing.T) {
 	require.Less(t, compressedBB.Len(), noCompactBB.Len())
 }
 
+func TestGoroutineProfileSizeWin(t *testing.T) {
+	gpProfiles := getGoroutineProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_3")
+	gDebugProfiles := getDebugProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_3")
+
+	profileMerger := NewGoroutineProfileMerger()
+	mergedProfile := profileMerger.Merge(gpProfiles...)
+	require.NotNil(t, mergedProfile)
+
+	gpb := bytes.NewBuffer(nil)
+	require.NoError(t, profileMerger.WriteCompressed(gpb))
+
+	gdbUncompressed := bytes.NewBuffer(nil)
+	for _, gdp := range gDebugProfiles {
+		gdbUncompressed.Write(gdp)
+	}
+
+	gdbCompressed := bytes.NewBuffer(nil)
+	gz := gzip.NewWriter(gdbCompressed)
+	_, _ = gz.Write(gdbUncompressed.Bytes())
+	_ = gz.Flush()
+
+	println(float32(gpb.Len()) / float32(gdbCompressed.Len()) * 100)
+	println()
+}
+
 func TestMergeUnpack(t *testing.T) {
 	t.Run("general merge unpack", func(t *testing.T) {
 		profiles := getProfilesVtProto(t, false, "hprof1", "hprof2", "hprof3", "hprof4")
@@ -147,54 +173,67 @@ func TestMergeUnpack(t *testing.T) {
 	})
 
 	t.Run("merge unpack debug goroutine profiles", func(t *testing.T) {
-		profiles := getDebugProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_2")
+		profiles := getGoroutineProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_3")
 
-		profileMerger := NewByteProfileMerger()
-		mergedProfile := profileMerger.Merge(profiles...)
-		require.NotNil(t, mergedProfile)
-
-		unpacker := NewByteProfileUnPacker(mergedProfile)
-		p, err := unpacker.Unpack(0)
-		require.NoError(t, err)
-		require.NotNil(t, p)
-		require.Equal(t, profiles[0], p)
-
-		p, err = unpacker.Unpack(1)
-		require.NoError(t, err)
-		require.NotNil(t, p)
-		require.Equal(t, profiles[1], p)
-
-		p, err = unpacker.Unpack(2)
-		require.NoError(t, err)
-		require.NotNil(t, p)
-		require.Equal(t, profiles[2], p)
-	})
-
-	t.Run("merge unpack raw debug goroutine profiles", func(t *testing.T) {
-		profiles := getDebugProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_2")
-
-		profileMerger := NewByteProfileMerger()
+		profileMerger := NewGoroutineProfileMerger()
 		mergedProfile := profileMerger.Merge(profiles...)
 		require.NotNil(t, mergedProfile)
 
 		bb := bytes.NewBuffer(nil)
 		require.NoError(t, profileMerger.WriteCompressed(bb))
 
-		unpacker := NewByteProfileUnPacker(mergedProfile)
-		p, err := unpacker.UnpackRaw(bb.Bytes(), 0)
+		unpackerOne := NewGoroutineProfileUnPacker(mergedProfile)
+		p, err := unpackerOne.Unpack(0)
 		require.NoError(t, err)
 		require.NotNil(t, p)
-		require.Equal(t, profiles[0], p)
+		require.Equal(t, profiles[0].GetTotal(), p.GetTotal())
+		require.Equal(t, profiles[0].GetStacktraces(), p.GetStacktraces())
 
-		p, err = unpacker.UnpackRaw(bb.Bytes(), 1)
+		unpackerTwo := NewGoroutineProfileUnPacker(mergedProfile)
+		p, err = unpackerTwo.Unpack(1)
 		require.NoError(t, err)
 		require.NotNil(t, p)
-		require.Equal(t, profiles[1], p)
+		require.Equal(t, profiles[1].GetTotal(), p.GetTotal())
+		require.Equal(t, profiles[1].GetStacktraces(), p.GetStacktraces())
 
-		p, err = unpacker.UnpackRaw(bb.Bytes(), 2)
+		unpackerThree := NewGoroutineProfileUnPacker(mergedProfile)
+		p, err = unpackerThree.Unpack(2)
 		require.NoError(t, err)
 		require.NotNil(t, p)
-		require.Equal(t, profiles[2], p)
+		require.Equal(t, profiles[2].GetTotal(), p.GetTotal())
+		require.Equal(t, profiles[2].GetStacktraces(), p.GetStacktraces())
+	})
+
+	t.Run("merge unpack raw debug goroutine profiles", func(t *testing.T) {
+		profiles := getGoroutineProfiles(t, "parca_goroutine_debug_1_1", "parca_goroutine_debug_1_2", "parca_goroutine_debug_1_3")
+
+		profileMerger := NewGoroutineProfileMerger()
+		mergedProfile := profileMerger.Merge(profiles...)
+		require.NotNil(t, mergedProfile)
+
+		bb := bytes.NewBuffer(nil)
+		require.NoError(t, profileMerger.WriteCompressed(bb))
+
+		unpackerOne := NewGoroutineProfileUnPacker(nil)
+		p, err := unpackerOne.UnpackRaw(bb.Bytes(), 0)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[0].GetTotal(), p.GetTotal())
+		require.Equal(t, profiles[0].GetStacktraces(), p.GetStacktraces())
+
+		unpackerTwo := NewGoroutineProfileUnPacker(nil)
+		p, err = unpackerTwo.UnpackRaw(bb.Bytes(), 1)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[1].GetTotal(), p.GetTotal())
+		require.Equal(t, profiles[1].GetStacktraces(), p.GetStacktraces())
+
+		unpackerThree := NewGoroutineProfileUnPacker(nil)
+		p, err = unpackerThree.UnpackRaw(bb.Bytes(), 2)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+		require.Equal(t, profiles[2].GetTotal(), p.GetTotal())
+		require.Equal(t, profiles[2].GetStacktraces(), p.GetStacktraces())
 	})
 }
 
@@ -205,6 +244,8 @@ func BenchmarkVtProtobufParsing(b *testing.B) {
 	require.NoError(b, err)
 	gp := GoroutineProfileFromVTPool()
 	require.NoError(b, gp.Parse(bs))
+	s := gp.MarshalDebug()
+	println(s)
 
 	for i := 0; i < b.N; i++ {
 		profiles := getProfilesVtProto(b, false, "hprof1", "hprof2", "hprof3", "hprof4")
@@ -282,6 +323,23 @@ func getDebugProfiles(t require.TestingT, paths ...string) [][]byte {
 		p, err := io.ReadAll(file)
 		require.NoError(t, err)
 		profiles[i] = p
+	}
+
+	return profiles
+
+}
+
+func getGoroutineProfiles(t require.TestingT, paths ...string) []*GoroutineProfile {
+	dir := "./testdata/"
+	profiles := make([]*GoroutineProfile, len(paths))
+	for i, profileName := range paths {
+		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
+		require.NoError(t, err)
+		p, err := io.ReadAll(file)
+		require.NoError(t, err)
+		gp := GoroutineProfileFromVTPool()
+		require.NoError(t, gp.Parse(p))
+		profiles[i] = gp
 	}
 
 	return profiles
