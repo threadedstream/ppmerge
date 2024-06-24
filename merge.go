@@ -386,8 +386,8 @@ func (pw *ProfileMerger) mergePeriodTypes(ps ...*Profile) {
 
 	for _, p := range ps {
 		pw.mergedProfile.PeriodTypes = append(pw.mergedProfile.PeriodTypes,
-			p.PeriodType.Type,
-			p.PeriodType.Unit,
+			int64(pw.getStringRef(uint64(p.PeriodType.Type), p)),
+			int64(pw.getStringRef(uint64(p.PeriodType.Unit), p)),
 		)
 	}
 }
