@@ -83,6 +83,8 @@ func TestHeapMerge(t *testing.T) {
 
 			require.Equal(t, recoveredOne.DurationNanos, tc.actualProfile.DurationNanos)
 			require.Equal(t, recoveredOne.TimeNanos, tc.actualProfile.TimeNanos)
+			require.Equal(t, recoveredOne.PeriodType.Type, actualProfileStringTable[tc.actualProfile.PeriodType.Type])
+			require.Equal(t, recoveredOne.PeriodType.Unit, actualProfileStringTable[tc.actualProfile.PeriodType.Unit])
 		})
 	}
 }
