@@ -7,9 +7,35 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/pprof/profile"
+	pprofile "github.com/google/pprof/profile"
 	"github.com/stretchr/testify/require"
+	"github.com/threadedstream/ppmerge/profile"
 )
+
+func TestLabeledProfilesMerge(t *testing.T) {
+	profiles := getProfilesVtProto(t, false, "labels.prof")
+	profileMerger := NewProfileMerger()
+
+	mergedProfile := profileMerger.Merge(profiles...)
+	require.NotNil(t, mergedProfile)
+
+	actualProfile := getProfiles(t, "labels.prof")[0]
+
+	unpacker := NewProfileUnPacker(mergedProfile)
+	require.NotNil(t, unpacker)
+
+	recoveredProfile, err := unpacker.Unpack(0)
+	require.NoError(t, err)
+	require.NotNil(t, recoveredProfile)
+
+	require.Equal(t, len(recoveredProfile.Sample), len(actualProfile.Sample))
+
+	for i, sample := range actualProfile.Sample {
+		require.Equal(t, recoveredProfile.Sample[i].Label, sample.Label)
+		require.Equal(t, recoveredProfile.Sample[i].NumLabel, sample.NumLabel)
+		require.Equal(t, recoveredProfile.Sample[i].NumUnit, sample.NumUnit)
+	}
+}
 
 func TestHeapMerge(t *testing.T) {
 	profiles := getProfilesVtProto(t, false, "hprof1", "hprof2", "hprof3", "hprof4")
@@ -22,7 +48,7 @@ func TestHeapMerge(t *testing.T) {
 	type testCase struct {
 		name                string
 		recoveredProfileIdx uint64
-		actualProfile       *Profile
+		actualProfile       *profile.Profile
 	}
 
 	for _, tc := range []testCase{
@@ -243,7 +269,7 @@ func BenchmarkVtProtobufParsing(b *testing.B) {
 	require.NoError(b, err)
 	bs, err := io.ReadAll(file)
 	require.NoError(b, err)
-	gp := GoroutineProfileFromVTPool()
+	gp := profile.GoroutineProfileFromVTPool()
 	require.NoError(b, gp.Parse(bs))
 	s := gp.MarshalDebug()
 	println(s)
@@ -287,13 +313,13 @@ func BenchmarkProfileUnPacker(b *testing.B) {
 	}
 }
 
-func getProfiles(t require.TestingT, paths ...string) []*profile.Profile {
+func getProfiles(t require.TestingT, paths ...string) []*pprofile.Profile {
 	dir := "./testdata/"
-	var profiles []*profile.Profile
+	var profiles []*pprofile.Profile
 	for _, profileName := range paths {
 		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
 		require.NoError(t, err)
-		prof, err := profile.Parse(file)
+		prof, err := pprofile.Parse(file)
 		require.NoError(t, err)
 		profiles = append(profiles, prof)
 	}
@@ -301,13 +327,13 @@ func getProfiles(t require.TestingT, paths ...string) []*profile.Profile {
 	return profiles
 }
 
-func getProfilesVtProto(t require.TestingT, debugGoroutine bool, paths ...string) []*Profile {
+func getProfilesVtProto(t require.TestingT, debugGoroutine bool, paths ...string) []*profile.Profile {
 	dir := "./testdata/"
-	var profiles []*Profile
+	var profiles []*profile.Profile
 	for _, profileName := range paths {
 		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
 		require.NoError(t, err)
-		prof, err := ParseProfile(file)
+		prof, err := profile.ParseProfile(file)
 		require.NoError(t, err)
 		profiles = append(profiles, prof)
 	}
@@ -330,15 +356,15 @@ func getDebugProfiles(t require.TestingT, paths ...string) [][]byte {
 
 }
 
-func getGoroutineProfiles(t require.TestingT, paths ...string) []*GoroutineProfile {
+func getGoroutineProfiles(t require.TestingT, paths ...string) []*profile.GoroutineProfile {
 	dir := "./testdata/"
-	profiles := make([]*GoroutineProfile, len(paths))
+	profiles := make([]*profile.GoroutineProfile, len(paths))
 	for i, profileName := range paths {
 		file, err := os.OpenFile(dir+profileName, os.O_RDONLY, 0666)
 		require.NoError(t, err)
 		p, err := io.ReadAll(file)
 		require.NoError(t, err)
-		gp := GoroutineProfileFromVTPool()
+		gp := profile.GoroutineProfileFromVTPool()
 		require.NoError(t, gp.Parse(p))
 		profiles[i] = gp
 	}

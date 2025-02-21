@@ -1,10 +1,8 @@
 syntax = "proto3";
 
-package dummymergedprofile;
+package ppmerge;
 
-
-option go_package = "github.com/threadedstream/ppmerge";
-
+option go_package = "github.com/threadedstream/ppmerge/profile";
 
 message GoroutineProfile {
   uint64 total = 1;
@@ -116,6 +114,11 @@ message Label {
   // and apply appropriate unit conversions to these.
   int64 num_unit = 4;  // Index into string table
 }
+
+message Labels {
+  repeated Label labels = 1;
+}
+
 
 message Mapping {
   // Unique nonzero id for the mapping.

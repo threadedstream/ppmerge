@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/pprof/profile"
+	pprofile "github.com/google/pprof/profile"
 	"github.com/pkg/errors"
+	"github.com/threadedstream/ppmerge/profile"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -38,22 +39,22 @@ type locationKey struct {
 type ProfileUnPacker struct {
 	mergedProfile *MergedProfile
 
-	functionByID map[uint64]*profile.Function
-	mappingByID  map[uint64]*profile.Mapping
-	locationByID map[uint64]*profile.Location
+	functionByID map[uint64]*pprofile.Function
+	mappingByID  map[uint64]*pprofile.Mapping
+	locationByID map[uint64]*pprofile.Location
 }
 
 // NewProfileUnPacker returns ProfileUnPacker instance
 func NewProfileUnPacker(mergedProfile *MergedProfile) *ProfileUnPacker {
 	return &ProfileUnPacker{
 		mergedProfile: mergedProfile,
-		functionByID:  make(map[uint64]*profile.Function),
-		mappingByID:   make(map[uint64]*profile.Mapping),
-		locationByID:  make(map[uint64]*profile.Location),
+		functionByID:  make(map[uint64]*pprofile.Function),
+		mappingByID:   make(map[uint64]*pprofile.Mapping),
+		locationByID:  make(map[uint64]*pprofile.Location),
 	}
 }
 
-func (pu *ProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*profile.Profile, error) {
+func (pu *ProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*pprofile.Profile, error) {
 	bb := bytes.NewBuffer(compressedRawProfile)
 
 	gzReader, err := gzip.NewReader(bb)
@@ -77,8 +78,8 @@ func (pu *ProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*
 	return pu.Unpack(idx)
 }
 
-func (pu *ProfileUnPacker) Unpack(idx uint64) (*profile.Profile, error) {
-	var p profile.Profile
+func (pu *ProfileUnPacker) Unpack(idx uint64) (*pprofile.Profile, error) {
+	var p pprofile.Profile
 	if err := pu.unpackSampleTypes(&p, idx); err != nil {
 		return nil, errors.Wrap(err, "unpack sample types")
 	}
@@ -100,7 +101,7 @@ func (pu *ProfileUnPacker) Unpack(idx uint64) (*profile.Profile, error) {
 	return &p, nil
 }
 
-func (pu *ProfileUnPacker) unpackSamples(p *profile.Profile, idx uint64) error {
+func (pu *ProfileUnPacker) unpackSamples(p *pprofile.Profile, idx uint64) error {
 	if idx > uint64(len(pu.mergedProfile.NumSamples)) {
 		return indexOutOfRangeErr
 	}
@@ -114,7 +115,7 @@ func (pu *ProfileUnPacker) unpackSamples(p *profile.Profile, idx uint64) error {
 
 	limit := offset + numSamples
 
-	p.Sample = make([]*profile.Sample, 0, numSamples)
+	p.Sample = make([]*pprofile.Sample, 0, numSamples)
 	for offset < limit {
 		p.Sample = append(p.Sample, pu.unpackSample(p, offset))
 		offset++
@@ -123,7 +124,7 @@ func (pu *ProfileUnPacker) unpackSamples(p *profile.Profile, idx uint64) error {
 	return nil
 }
 
-func (pu *ProfileUnPacker) unpackSampleTypes(p *profile.Profile, idx uint64) error {
+func (pu *ProfileUnPacker) unpackSampleTypes(p *pprofile.Profile, idx uint64) error {
 	if idx > uint64(len(pu.mergedProfile.NumSampleTypes)) {
 		return indexOutOfRangeErr
 	}
@@ -137,7 +138,7 @@ func (pu *ProfileUnPacker) unpackSampleTypes(p *profile.Profile, idx uint64) err
 
 	limit := offset + (numSampleTypes * 2)
 
-	p.SampleType = make([]*profile.ValueType, 0, numSampleTypes)
+	p.SampleType = make([]*pprofile.ValueType, 0, numSampleTypes)
 	for offset < limit {
 		p.SampleType = append(p.SampleType, pu.unpackSampleType(offset))
 		offset += 2
@@ -146,8 +147,8 @@ func (pu *ProfileUnPacker) unpackSampleTypes(p *profile.Profile, idx uint64) err
 	return nil
 }
 
-func (pu *ProfileUnPacker) unpackSampleType(offset uint64) *profile.ValueType {
-	var vt profile.ValueType
+func (pu *ProfileUnPacker) unpackSampleType(offset uint64) *pprofile.ValueType {
+	var vt pprofile.ValueType
 	vt.Type = pu.getString(int(pu.mergedProfile.SampleType[offset]))
 	offset++
 	vt.Unit = pu.getString(int(pu.mergedProfile.SampleType[offset]))
@@ -155,30 +156,34 @@ func (pu *ProfileUnPacker) unpackSampleType(offset uint64) *profile.ValueType {
 	return &vt
 }
 
-func (pu *ProfileUnPacker) unpackSample(p *profile.Profile, offset uint64) *profile.Sample {
-	var s profile.Sample
+func (pu *ProfileUnPacker) unpackSample(p *pprofile.Profile, offset uint64) *pprofile.Sample {
+	var s pprofile.Sample
 	sample := pu.mergedProfile.Samples[offset]
-	s.Location = make([]*profile.Location, 0, len(sample.LocationId))
+	s.Location = make([]*pprofile.Location, 0, len(sample.LocationId))
 	for _, loc := range sample.LocationId {
 		s.Location = append(s.Location, pu.unpackLocation(p, uint64(loc)))
 	}
 	s.Value = sample.Value
+	if labels, ok := pu.mergedProfile.Labels[offset]; ok {
+		profile.ConvertLabels(&s, labels, pu.mergedProfile.StringTable)
+	}
+
 	return &s
 }
 
-func (pu *ProfileUnPacker) unpackPeriodType(p *profile.Profile, idx uint64) error {
+func (pu *ProfileUnPacker) unpackPeriodType(p *pprofile.Profile, idx uint64) error {
 	if idx*2 >= uint64(len(pu.mergedProfile.PeriodTypes)) || (idx*2)+1 > uint64(len(pu.mergedProfile.PeriodTypes))-1 {
 		return indexOutOfRangeErr
 	}
 
-	p.PeriodType = new(profile.ValueType)
+	p.PeriodType = new(pprofile.ValueType)
 	p.PeriodType.Type = pu.getString(int(pu.mergedProfile.PeriodTypes[idx*2]))
 	p.PeriodType.Unit = pu.getString(int(pu.mergedProfile.PeriodTypes[idx*2+1]))
 
 	return nil
 }
 
-func (pu *ProfileUnPacker) unpackPeriod(p *profile.Profile, idx uint64) error {
+func (pu *ProfileUnPacker) unpackPeriod(p *pprofile.Profile, idx uint64) error {
 	if idx >= uint64(len(pu.mergedProfile.Periods)) {
 		return indexOutOfRangeErr
 	}
@@ -187,7 +192,7 @@ func (pu *ProfileUnPacker) unpackPeriod(p *profile.Profile, idx uint64) error {
 	return nil
 }
 
-func (pu *ProfileUnPacker) unpackDurationNanos(p *profile.Profile, idx uint64) error {
+func (pu *ProfileUnPacker) unpackDurationNanos(p *pprofile.Profile, idx uint64) error {
 	if idx >= uint64(len(pu.mergedProfile.DurationsNanos)) {
 		return indexOutOfRangeErr
 	}
@@ -196,7 +201,7 @@ func (pu *ProfileUnPacker) unpackDurationNanos(p *profile.Profile, idx uint64) e
 	return nil
 }
 
-func (pu *ProfileUnPacker) unpackTimeNanos(p *profile.Profile, idx uint64) error {
+func (pu *ProfileUnPacker) unpackTimeNanos(p *pprofile.Profile, idx uint64) error {
 	if idx >= uint64(len(pu.mergedProfile.TimesNanos)) {
 		return indexOutOfRangeErr
 	}
@@ -205,7 +210,7 @@ func (pu *ProfileUnPacker) unpackTimeNanos(p *profile.Profile, idx uint64) error
 	return nil
 }
 
-func (pu *ProfileUnPacker) unpackLocation(p *profile.Profile, id uint64) *profile.Location {
+func (pu *ProfileUnPacker) unpackLocation(p *pprofile.Profile, id uint64) *pprofile.Location {
 	if loc, ok := pu.locationByID[id]; ok {
 		return loc
 	}
@@ -215,11 +220,11 @@ func (pu *ProfileUnPacker) unpackLocation(p *profile.Profile, id uint64) *profil
 	}
 
 	mergedLocation := pu.mergedProfile.Locations[id-1]
-	loc := &profile.Location{
+	loc := &pprofile.Location{
 		ID:      uint64(len(p.Location) + 1),
 		Mapping: pu.unpackMapping(p, mergedLocation.MappingId),
 		Address: mergedLocation.Address,
-		Line:    make([]profile.Line, len(mergedLocation.Line), len(mergedLocation.Line)),
+		Line:    make([]pprofile.Line, len(mergedLocation.Line), len(mergedLocation.Line)),
 	}
 
 	for i, line := range mergedLocation.Line {
@@ -232,8 +237,8 @@ func (pu *ProfileUnPacker) unpackLocation(p *profile.Profile, id uint64) *profil
 	return loc
 }
 
-func (pu *ProfileUnPacker) unpackLine(p *profile.Profile, line *MergeLine) profile.Line {
-	return profile.Line{
+func (pu *ProfileUnPacker) unpackLine(p *pprofile.Profile, line *MergeLine) pprofile.Line {
+	return pprofile.Line{
 		Line:     line.Line,
 		Function: pu.unpackFunction(p, line.FunctionId),
 	}
@@ -246,7 +251,7 @@ func (pu *ProfileUnPacker) getString(id int) string {
 	return pu.mergedProfile.StringTable[id]
 }
 
-func (pu *ProfileUnPacker) unpackFunction(p *profile.Profile, id uint64) *profile.Function {
+func (pu *ProfileUnPacker) unpackFunction(p *pprofile.Profile, id uint64) *pprofile.Function {
 	if fn, ok := pu.functionByID[id]; ok {
 		return fn
 	}
@@ -257,7 +262,7 @@ func (pu *ProfileUnPacker) unpackFunction(p *profile.Profile, id uint64) *profil
 
 	mergedFunction := pu.mergedProfile.Functions[id-1]
 
-	fn := &profile.Function{
+	fn := &pprofile.Function{
 		ID:         uint64(len(p.Function) + 1),
 		Name:       pu.getString(int(mergedFunction.Name)),
 		SystemName: pu.getString(int(mergedFunction.SystemName)),
@@ -269,7 +274,7 @@ func (pu *ProfileUnPacker) unpackFunction(p *profile.Profile, id uint64) *profil
 	return fn
 }
 
-func (pu *ProfileUnPacker) unpackMapping(p *profile.Profile, id uint64) *profile.Mapping {
+func (pu *ProfileUnPacker) unpackMapping(p *pprofile.Profile, id uint64) *pprofile.Mapping {
 	if m, ok := pu.mappingByID[id]; ok {
 		return m
 	}
@@ -279,7 +284,7 @@ func (pu *ProfileUnPacker) unpackMapping(p *profile.Profile, id uint64) *profile
 	}
 
 	mergedMapping := pu.mergedProfile.Mappings[id-1]
-	profileMapping := &profile.Mapping{
+	profileMapping := &pprofile.Mapping{
 		ID:      uint64(len(p.Mapping) + 1),
 		Start:   mergedMapping.MemoryStart,
 		Limit:   mergedMapping.MemoryLimit,
@@ -314,7 +319,7 @@ func NewProfileMerger() *ProfileMerger {
 }
 
 func (pw *ProfileMerger) WriteCompressed(w io.Writer) error {
-	// Write writes the profile as a gzip-compressed marshaled protobuf.
+	// Write writes the pprofile as a gzip-compressed marshaled protobuf.
 	zw := gzip.NewWriter(w)
 	defer zw.Close()
 	serialized, err := pw.mergedProfile.MarshalVT()
@@ -335,12 +340,13 @@ func (pw *ProfileMerger) WriteUncompressed(w io.Writer) error {
 	return err
 }
 
-func (pw *ProfileMerger) Merge(ps ...*Profile) *MergedProfile {
+func (pw *ProfileMerger) Merge(ps ...*profile.Profile) *MergedProfile {
 	pw.mergedProfile.NumFunctions = make([]uint64, 0, len(ps))
 	pw.mergedProfile.NumLocations = make([]uint64, 0, len(ps))
 	pw.mergedProfile.NumSampleTypes = make([]uint64, 0, len(ps))
 	pw.mergedProfile.NumMappings = make([]uint64, 0, len(ps))
 	pw.mergedProfile.NumSamples = make([]uint64, 0, len(ps))
+	pw.mergedProfile.Labels = make(map[uint64]*profile.Labels)
 
 	for _, p := range ps {
 		pw.mergedProfile.NumFunctions = append(pw.mergedProfile.NumFunctions, uint64(len(p.Function)))
@@ -366,7 +372,7 @@ func (pw *ProfileMerger) Merge(ps ...*Profile) *MergedProfile {
 	return pw.mergedProfile
 }
 
-func (pw *ProfileMerger) mergeSamples(ps ...*Profile) {
+func (pw *ProfileMerger) mergeSamples(ps ...*profile.Profile) {
 	// allocate samples slice beforehand
 	size := 0
 	for _, p := range ps {
@@ -377,22 +383,47 @@ func (pw *ProfileMerger) mergeSamples(ps ...*Profile) {
 	for _, p := range ps {
 		for _, s := range p.Sample {
 			pw.mergedProfile.Samples = append(pw.mergedProfile.Samples, pw.asMergedSample(s, p))
+			if len(s.Label) > 0 {
+				pw.mergeLabels(s.Label, p)
+			}
 		}
 	}
 }
 
-func (pw *ProfileMerger) mergePeriodTypes(ps ...*Profile) {
+func (pw *ProfileMerger) mergeLabels(labels []*profile.Label, p *profile.Profile) {
+	lbls := &profile.Labels{
+		Labels: make([]*profile.Label, 0, len(labels)),
+	}
+
+	for _, label := range labels {
+		lbl := &profile.Label{
+			Key: int64(pw.putString(uint64(label.Key), p)),
+		}
+		if label.Str > 0 {
+			lbl.Str = int64(pw.putString(uint64(label.Str), p))
+		} else if label.Num != 0 || label.NumUnit != 0 {
+			lbl.Num = label.Num
+			lbl.NumUnit = int64(pw.putString(uint64(label.NumUnit), p))
+		}
+		lbls.Labels = append(lbls.Labels, lbl)
+	}
+
+	idx := uint64(len(pw.mergedProfile.Samples)) - 1
+	pw.mergedProfile.Labels[idx] = lbls
+}
+
+func (pw *ProfileMerger) mergePeriodTypes(ps ...*profile.Profile) {
 	pw.mergedProfile.PeriodTypes = make([]int64, 0, len(ps)*2)
 
 	for _, p := range ps {
 		pw.mergedProfile.PeriodTypes = append(pw.mergedProfile.PeriodTypes,
-			int64(pw.getStringRef(uint64(p.PeriodType.Type), p)),
-			int64(pw.getStringRef(uint64(p.PeriodType.Unit), p)),
+			int64(pw.putString(uint64(p.PeriodType.Type), p)),
+			int64(pw.putString(uint64(p.PeriodType.Unit), p)),
 		)
 	}
 }
 
-func (pw *ProfileMerger) mergeTimeNanos(ps ...*Profile) {
+func (pw *ProfileMerger) mergeTimeNanos(ps ...*profile.Profile) {
 	pw.mergedProfile.TimesNanos = make([]int64, 0, len(ps))
 
 	for _, p := range ps {
@@ -400,7 +431,7 @@ func (pw *ProfileMerger) mergeTimeNanos(ps ...*Profile) {
 	}
 }
 
-func (pw *ProfileMerger) mergeDurationNanos(ps ...*Profile) {
+func (pw *ProfileMerger) mergeDurationNanos(ps ...*profile.Profile) {
 	pw.mergedProfile.DurationsNanos = make([]int64, 0, len(ps))
 
 	for _, p := range ps {
@@ -408,7 +439,7 @@ func (pw *ProfileMerger) mergeDurationNanos(ps ...*Profile) {
 	}
 }
 
-func (pw *ProfileMerger) mergePeriods(ps ...*Profile) {
+func (pw *ProfileMerger) mergePeriods(ps ...*profile.Profile) {
 	pw.mergedProfile.Periods = make([]int64, 0, len(ps))
 
 	for _, p := range ps {
@@ -416,7 +447,7 @@ func (pw *ProfileMerger) mergePeriods(ps ...*Profile) {
 	}
 }
 
-func (pw *ProfileMerger) mergeSampleTypes(ps ...*Profile) {
+func (pw *ProfileMerger) mergeSampleTypes(ps ...*profile.Profile) {
 	size := 0
 	for _, p := range ps {
 		size += len(p.SampleType)
@@ -427,14 +458,14 @@ func (pw *ProfileMerger) mergeSampleTypes(ps ...*Profile) {
 	for _, p := range ps {
 		for _, vt := range p.SampleType {
 			pw.mergedProfile.SampleType = append(pw.mergedProfile.SampleType,
-				int64(pw.getStringRef(uint64(vt.Type), p)),
-				int64(pw.getStringRef(uint64(vt.Unit), p)),
+				int64(pw.putString(uint64(vt.Type), p)),
+				int64(pw.putString(uint64(vt.Unit), p)),
 			)
 		}
 	}
 }
 
-func (pw *ProfileMerger) putMapping(src *Mapping, p *Profile) uint64 {
+func (pw *ProfileMerger) putMapping(src *profile.Mapping, p *profile.Profile) uint64 {
 	if src == nil {
 		return math.MaxUint64
 	}
@@ -443,8 +474,8 @@ func (pw *ProfileMerger) putMapping(src *Mapping, p *Profile) uint64 {
 		MemoryStart:     src.MemoryStart,
 		MemoryLimit:     src.MemoryLimit,
 		FileOffset:      src.FileOffset,
-		Filename:        int64(pw.getStringRef(uint64(src.Filename), p)),
-		BuildId:         int64(pw.getStringRef(uint64(src.BuildId), p)),
+		Filename:        int64(pw.putString(uint64(src.Filename), p)),
+		BuildId:         int64(pw.putString(uint64(src.BuildId), p)),
 		HasFilenames:    src.HasFilenames,
 		HasFunctions:    src.HasFunctions,
 		HasInlineFrames: src.HasInlineFrames,
@@ -463,7 +494,7 @@ func (pw *ProfileMerger) putMapping(src *Mapping, p *Profile) uint64 {
 	return mapping.Id
 }
 
-func (pw *ProfileMerger) asMergedSample(s *Sample, p *Profile) *MergeSample {
+func (pw *ProfileMerger) asMergedSample(s *profile.Sample, p *profile.Profile) *MergeSample {
 	mergedProfileSample := &MergeSample{
 		LocationId: make([]int64, 0, len(s.LocationId)),
 		Value:      s.Value,
@@ -476,14 +507,14 @@ func (pw *ProfileMerger) asMergedSample(s *Sample, p *Profile) *MergeSample {
 	return mergedProfileSample
 }
 
-func (pw *ProfileMerger) asMergedValueType(vt *ValueType) *MergeValueType {
+func (pw *ProfileMerger) asMergedValueType(vt *profile.ValueType) *MergeValueType {
 	return &MergeValueType{
 		Type: vt.Type,
 		Unit: vt.Unit,
 	}
 }
 
-func (pw *ProfileMerger) asMergedProfileLines(lines []*Line, p *Profile) []*MergeLine {
+func (pw *ProfileMerger) asMergedProfileLines(lines []*profile.Line, p *profile.Profile) []*MergeLine {
 	mergedProfileLines := make([]*MergeLine, 0, len(lines))
 	for _, ln := range lines {
 		mergedProfileLines = append(mergedProfileLines, pw.asMergedProfileLine(ln, p))
@@ -491,14 +522,14 @@ func (pw *ProfileMerger) asMergedProfileLines(lines []*Line, p *Profile) []*Merg
 	return mergedProfileLines
 }
 
-func (pw *ProfileMerger) asMergedProfileLine(line *Line, p *Profile) *MergeLine {
+func (pw *ProfileMerger) asMergedProfileLine(line *profile.Line, p *profile.Profile) *MergeLine {
 	return &MergeLine{
 		FunctionId: pw.putFunction(p.Function[line.FunctionId-1], p),
 		Line:       line.Line,
 	}
 }
 
-func (pw *ProfileMerger) getStringRef(id uint64, p *Profile) int {
+func (pw *ProfileMerger) putString(id uint64, p *profile.Profile) int {
 	strVal := p.StringTable[id]
 	if localId, ok := pw.stringTable[strVal]; ok {
 		return localId
@@ -553,14 +584,14 @@ func (pw *ProfileMerger) getLocationKey(loc *MergeLocation) locationKey {
 	return key
 }
 
-func (pw *ProfileMerger) putLine(src *Line, p *Profile) *MergeLine {
+func (pw *ProfileMerger) putLine(src *profile.Line, p *profile.Profile) *MergeLine {
 	return &MergeLine{
 		FunctionId: pw.putFunction(p.Function[src.FunctionId-1], p),
 		Line:       src.Line,
 	}
 }
 
-func (pw *ProfileMerger) putLocation(src *Location, p *Profile) uint64 {
+func (pw *ProfileMerger) putLocation(src *profile.Location, p *profile.Profile) uint64 {
 	if src == nil {
 		return math.MaxUint64
 	}
@@ -593,15 +624,15 @@ func (pw *ProfileMerger) putLocation(src *Location, p *Profile) uint64 {
 	return loc.Id
 }
 
-func (pw *ProfileMerger) putFunction(src *Function, p *Profile) uint64 {
+func (pw *ProfileMerger) putFunction(src *profile.Function, p *profile.Profile) uint64 {
 	if src == nil {
 		return math.MaxUint64
 	}
 
 	f := &MergeFunction{
-		Name:       int64(pw.getStringRef(uint64(src.Name), p)),
-		SystemName: int64(pw.getStringRef(uint64(src.SystemName), p)),
-		Filename:   int64(pw.getStringRef(uint64(src.Filename), p)),
+		Name:       int64(pw.putString(uint64(src.Name), p)),
+		SystemName: int64(pw.putString(uint64(src.SystemName), p)),
+		Filename:   int64(pw.putString(uint64(src.Filename), p)),
 		StartLine:  src.StartLine,
 	}
 
