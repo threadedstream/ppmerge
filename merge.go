@@ -285,12 +285,16 @@ func (pu *ProfileUnPacker) unpackMapping(p *pprofile.Profile, id uint64) *pprofi
 
 	mergedMapping := pu.mergedProfile.Mappings[id-1]
 	profileMapping := &pprofile.Mapping{
-		ID:      uint64(len(p.Mapping) + 1),
-		Start:   mergedMapping.MemoryStart,
-		Limit:   mergedMapping.MemoryLimit,
-		Offset:  mergedMapping.FileOffset,
-		File:    pu.getString(int(mergedMapping.Filename)),
-		BuildID: pu.getString(int(mergedMapping.BuildId)),
+		ID:              uint64(len(p.Mapping) + 1),
+		Start:           mergedMapping.MemoryStart,
+		Limit:           mergedMapping.MemoryLimit,
+		Offset:          mergedMapping.FileOffset,
+		File:            pu.getString(int(mergedMapping.Filename)),
+		BuildID:         pu.getString(int(mergedMapping.BuildId)),
+		HasFilenames:    mergedMapping.HasFilenames,
+		HasLineNumbers:  mergedMapping.HasLineNumbers,
+		HasFunctions:    mergedMapping.HasFunctions,
+		HasInlineFrames: mergedMapping.HasInlineFrames,
 	}
 	p.Mapping = append(p.Mapping, profileMapping)
 	pu.mappingByID[id] = profileMapping
