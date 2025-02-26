@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"io"
 
+	"github.com/threadedstream/ppmerge/profile"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -35,7 +36,7 @@ func (gpm *GoroutineProfileMerger) WriteCompressed(w io.Writer) error {
 	return err
 }
 
-func (gpm *GoroutineProfileMerger) Merge(gps ...*GoroutineProfile) *MergedGoroutineProfile {
+func (gpm *GoroutineProfileMerger) Merge(gps ...*profile.GoroutineProfile) *MergedGoroutineProfile {
 	gpm.mergedProfile.Totals = make([]uint64, 0, len(gps))
 	gpm.mergedProfile.NumStacktraces = make([]uint64, 0, len(gps))
 
@@ -45,8 +46,8 @@ func (gpm *GoroutineProfileMerger) Merge(gps ...*GoroutineProfile) *MergedGorout
 	return gpm.mergedProfile
 }
 
-func (gpm *GoroutineProfileMerger) merge(gps ...*GoroutineProfile) {
-	var resultStacktraces []*Stacktrace
+func (gpm *GoroutineProfileMerger) merge(gps ...*profile.GoroutineProfile) {
+	var resultStacktraces []*profile.Stacktrace
 	for _, gp := range gps {
 		gpm.mergedProfile.Totals = append(gpm.mergedProfile.Totals, gp.Total)
 		stacktraces := gp.GetStacktraces()
@@ -54,7 +55,7 @@ func (gpm *GoroutineProfileMerger) merge(gps ...*GoroutineProfile) {
 		gpm.mergedProfile.NumStacktraces = append(gpm.mergedProfile.NumStacktraces, uint64(len(stacktraces)))
 
 		for _, st := range stacktraces {
-			resultStacktrace := new(Stacktrace)
+			resultStacktrace := new(profile.Stacktrace)
 			resultStacktrace.Total = st.Total
 
 			resultStacktrace.PC = make([]uint64, len(st.PC))
@@ -65,7 +66,7 @@ func (gpm *GoroutineProfileMerger) merge(gps ...*GoroutineProfile) {
 				resultStacktraces = append(resultStacktraces, resultStacktrace)
 				continue
 			}
-			resultStacktrace.Frames = make([]*Frame, 0, len(frames))
+			resultStacktrace.Frames = make([]*profile.Frame, 0, len(frames))
 			for _, f := range frames {
 				resultStacktrace.Frames = append(resultStacktrace.Frames, gpm.remapFrame(f, gp.StringTable))
 			}
@@ -76,8 +77,8 @@ func (gpm *GoroutineProfileMerger) merge(gps ...*GoroutineProfile) {
 	gpm.mergedProfile.Stacktraces = resultStacktraces
 }
 
-func (gpm *GoroutineProfileMerger) remapFrame(frame *Frame, gpStringTable []string) *Frame {
-	return &Frame{
+func (gpm *GoroutineProfileMerger) remapFrame(frame *profile.Frame, gpStringTable []string) *profile.Frame {
+	return &profile.Frame{
 		Address:      frame.Address,
 		FunctionName: gpm.putString(gpStringTable[frame.FunctionName]),
 		Offset:       frame.Offset,
@@ -116,7 +117,7 @@ func NewGoroutineProfileUnPacker(mergedProfile *MergedGoroutineProfile) *Gorouti
 	}
 }
 
-func (gpu *GoroutineProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*GoroutineProfile, error) {
+func (gpu *GoroutineProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*profile.GoroutineProfile, error) {
 	bb := bytes.NewBuffer(compressedRawProfile)
 
 	gzReader, err := gzip.NewReader(bb)
@@ -140,11 +141,11 @@ func (gpu *GoroutineProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx 
 	return gpu.Unpack(idx)
 }
 
-func (gpu *GoroutineProfileUnPacker) Unpack(idx uint64) (*GoroutineProfile, error) {
+func (gpu *GoroutineProfileUnPacker) Unpack(idx uint64) (*profile.GoroutineProfile, error) {
 	if idx >= uint64(len(gpu.mergedProfile.NumStacktraces)) {
 		return nil, indexOutOfRangeErr
 	}
-	gp := GoroutineProfileFromVTPool()
+	gp := profile.GoroutineProfileFromVTPool()
 
 	gp.Total = gpu.mergedProfile.Totals[idx]
 
@@ -157,7 +158,7 @@ func (gpu *GoroutineProfileUnPacker) Unpack(idx uint64) (*GoroutineProfile, erro
 
 	limit := offset + numStacktraces
 
-	gp.Stacktraces = make([]*Stacktrace, 0, numStacktraces)
+	gp.Stacktraces = make([]*profile.Stacktrace, 0, numStacktraces)
 	for offset < limit {
 		gp.Stacktraces = append(gp.Stacktraces, gpu.remapStacktrace(gpu.mergedProfile.Stacktraces[offset]))
 		offset++
@@ -168,8 +169,8 @@ func (gpu *GoroutineProfileUnPacker) Unpack(idx uint64) (*GoroutineProfile, erro
 	return gp, nil
 }
 
-func (gpu *GoroutineProfileUnPacker) remapStacktrace(st *Stacktrace) *Stacktrace {
-	resultStacktrace := new(Stacktrace)
+func (gpu *GoroutineProfileUnPacker) remapStacktrace(st *profile.Stacktrace) *profile.Stacktrace {
+	resultStacktrace := new(profile.Stacktrace)
 	resultStacktrace.Total = st.Total
 
 	resultStacktrace.PC = make([]uint64, len(st.PC))
@@ -180,7 +181,7 @@ func (gpu *GoroutineProfileUnPacker) remapStacktrace(st *Stacktrace) *Stacktrace
 		return resultStacktrace
 	}
 
-	resultStacktrace.Frames = make([]*Frame, 0, len(st.Frames))
+	resultStacktrace.Frames = make([]*profile.Frame, 0, len(st.Frames))
 	for _, f := range frames {
 		resultStacktrace.Frames = append(resultStacktrace.Frames, gpu.remapFrame(f))
 	}
@@ -188,8 +189,8 @@ func (gpu *GoroutineProfileUnPacker) remapStacktrace(st *Stacktrace) *Stacktrace
 	return resultStacktrace
 }
 
-func (gpu *GoroutineProfileUnPacker) remapFrame(frame *Frame) *Frame {
-	return &Frame{
+func (gpu *GoroutineProfileUnPacker) remapFrame(frame *profile.Frame) *profile.Frame {
+	return &profile.Frame{
 		Address:      frame.Address,
 		FunctionName: gpu.putString(gpu.mergedProfile.StringTable[frame.FunctionName]),
 		Offset:       frame.Offset,
@@ -198,7 +199,7 @@ func (gpu *GoroutineProfileUnPacker) remapFrame(frame *Frame) *Frame {
 	}
 }
 
-func (gpu *GoroutineProfileUnPacker) finalizeStringTable(gp *GoroutineProfile) {
+func (gpu *GoroutineProfileUnPacker) finalizeStringTable(gp *profile.GoroutineProfile) {
 	gp.StringTable = make([]string, len(gpu.stringTable))
 	for k, v := range gpu.stringTable {
 		gp.StringTable[v] = k

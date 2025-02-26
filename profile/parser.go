@@ -1,4 +1,4 @@
-package ppmerge
+package profile
 
 import (
 	"bufio"

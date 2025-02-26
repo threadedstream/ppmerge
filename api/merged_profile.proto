@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package dummymergedprofile;
+package ppmerge;
 
-import "profile.proto";
+import "api/profile.proto";
 
 option go_package = "github.com/threadedstream/ppmerge";
 
@@ -36,6 +36,7 @@ message MergedProfile {
   repeated uint64 num_sample_types = 13;
   repeated uint64 num_mappings = 14;
   repeated uint64 num_samples = 15;
+  map<uint64, Labels> labels = 16;
 }
 
 // ValueType describes the semantics and measurement units of a value.
