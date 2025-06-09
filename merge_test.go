@@ -9,6 +9,7 @@ import (
 
 	pprofile "github.com/google/pprof/profile"
 	"github.com/stretchr/testify/require"
+
 	"github.com/threadedstream/ppmerge/profile"
 )
 
@@ -194,9 +195,27 @@ func TestMergeUnpack(t *testing.T) {
 		require.Greater(t, compressedBB.Len(), 0)
 
 		unpacker := NewProfileUnPacker(nil)
+		p, err := unpacker.UnpackCompressed(compressedBB.Bytes(), 0)
+		require.NoError(t, err)
+		require.NotNil(t, p)
+	})
+
+	t.Run("merge unpack raw", func(t *testing.T) {
+		profiles := getProfilesVtProto(t, false, "hprof1", "hprof2", "hprof3", "hprof4")
+
+		profileMerger := NewProfileMerger()
+		mergedProfile := profileMerger.Merge(profiles...)
+		require.NotNil(t, mergedProfile)
+
+		compressedBB := bytes.NewBuffer(nil)
+		require.NoError(t, profileMerger.WriteUncompressed(compressedBB))
+		require.Greater(t, compressedBB.Len(), 0)
+
+		unpacker := NewProfileUnPacker(nil)
 		p, err := unpacker.UnpackRaw(compressedBB.Bytes(), 0)
 		require.NoError(t, err)
 		require.NotNil(t, p)
+
 	})
 
 	t.Run("merge unpack debug goroutine profiles", func(t *testing.T) {
@@ -242,21 +261,21 @@ func TestMergeUnpack(t *testing.T) {
 		require.NoError(t, profileMerger.WriteCompressed(bb))
 
 		unpackerOne := NewGoroutineProfileUnPacker(nil)
-		p, err := unpackerOne.UnpackRaw(bb.Bytes(), 0)
+		p, err := unpackerOne.UnpackCompressed(bb.Bytes(), 0)
 		require.NoError(t, err)
 		require.NotNil(t, p)
 		require.Equal(t, profiles[0].GetTotal(), p.GetTotal())
 		require.Equal(t, profiles[0].GetStacktraces(), p.GetStacktraces())
 
 		unpackerTwo := NewGoroutineProfileUnPacker(nil)
-		p, err = unpackerTwo.UnpackRaw(bb.Bytes(), 1)
+		p, err = unpackerTwo.UnpackCompressed(bb.Bytes(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, p)
 		require.Equal(t, profiles[1].GetTotal(), p.GetTotal())
 		require.Equal(t, profiles[1].GetStacktraces(), p.GetStacktraces())
 
 		unpackerThree := NewGoroutineProfileUnPacker(nil)
-		p, err = unpackerThree.UnpackRaw(bb.Bytes(), 2)
+		p, err = unpackerThree.UnpackCompressed(bb.Bytes(), 2)
 		require.NoError(t, err)
 		require.NotNil(t, p)
 		require.Equal(t, profiles[2].GetTotal(), p.GetTotal())

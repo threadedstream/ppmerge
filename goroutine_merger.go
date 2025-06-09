@@ -5,8 +5,9 @@ import (
 	"compress/gzip"
 	"io"
 
-	"github.com/threadedstream/ppmerge/profile"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/threadedstream/ppmerge/profile"
 )
 
 type GoroutineProfileMerger struct {
@@ -117,7 +118,7 @@ func NewGoroutineProfileUnPacker(mergedProfile *MergedGoroutineProfile) *Gorouti
 	}
 }
 
-func (gpu *GoroutineProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*profile.GoroutineProfile, error) {
+func (gpu *GoroutineProfileUnPacker) UnpackCompressed(compressedRawProfile []byte, idx uint64) (*profile.GoroutineProfile, error) {
 	bb := bytes.NewBuffer(compressedRawProfile)
 
 	gzReader, err := gzip.NewReader(bb)
@@ -130,11 +131,16 @@ func (gpu *GoroutineProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx 
 		return nil, err
 	}
 
+	return gpu.UnpackRaw(rawProfile, idx)
+}
+
+func (gpu *GoroutineProfileUnPacker) UnpackRaw(rawProfile []byte, idx uint64) (*profile.GoroutineProfile, error) {
+
 	if gpu.mergedProfile == nil {
 		gpu.mergedProfile = MergedGoroutineProfileFromVTPool()
 	}
 
-	if err = proto.Unmarshal(rawProfile, gpu.mergedProfile); err != nil {
+	if err := proto.Unmarshal(rawProfile, gpu.mergedProfile); err != nil {
 		return nil, err
 	}
 

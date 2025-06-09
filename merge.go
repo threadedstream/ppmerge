@@ -10,8 +10,9 @@ import (
 
 	pprofile "github.com/google/pprof/profile"
 	"github.com/pkg/errors"
-	"github.com/threadedstream/ppmerge/profile"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/threadedstream/ppmerge/profile"
 )
 
 const (
@@ -54,7 +55,18 @@ func NewProfileUnPacker(mergedProfile *MergedProfile) *ProfileUnPacker {
 	}
 }
 
-func (pu *ProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*pprofile.Profile, error) {
+func (pu *ProfileUnPacker) UnpackRaw(rawProfile []byte, idx uint64) (*pprofile.Profile, error) {
+	if pu.mergedProfile == nil {
+		pu.mergedProfile = new(MergedProfile)
+	}
+	if err := proto.Unmarshal(rawProfile, pu.mergedProfile); err != nil {
+		return nil, err
+	}
+
+	return pu.Unpack(idx)
+}
+
+func (pu *ProfileUnPacker) UnpackCompressed(compressedRawProfile []byte, idx uint64) (*pprofile.Profile, error) {
 	bb := bytes.NewBuffer(compressedRawProfile)
 
 	gzReader, err := gzip.NewReader(bb)
@@ -66,16 +78,7 @@ func (pu *ProfileUnPacker) UnpackRaw(compressedRawProfile []byte, idx uint64) (*
 	if err != nil {
 		return nil, err
 	}
-
-	if pu.mergedProfile == nil {
-		pu.mergedProfile = new(MergedProfile)
-	}
-
-	if err = proto.Unmarshal(rawProfile, pu.mergedProfile); err != nil {
-		return nil, err
-	}
-
-	return pu.Unpack(idx)
+	return pu.UnpackRaw(rawProfile, idx)
 }
 
 func (pu *ProfileUnPacker) Unpack(idx uint64) (*pprofile.Profile, error) {
